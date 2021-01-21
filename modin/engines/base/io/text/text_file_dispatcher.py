@@ -20,7 +20,8 @@ import os
 from typing import Union, Sequence, Optional, Tuple
 import pandas
 
-from modin.config import NPartitions
+from modin.pandas import GPU_MANAGERS
+from modin.config import NPartitions, Backend
 
 ColumnNamesTypes = Tuple[Union[pandas.Index, pandas.MultiIndex, pandas.Int64Index]]
 
@@ -45,16 +46,26 @@ class TextFileDispatcher(FileDispatcher):
 
     @classmethod
     def build_partition(cls, partition_ids, row_lengths, column_widths):
+        if Backend.get() == "Cudf":
+
+            def create_partition(i, j):
+                return cls.frame_partition_cls(
+                    GPU_MANAGERS[i],
+                    partition_ids[i][j],
+                    length=row_lengths[i],
+                    width=column_widths[j],
+                )
+
+        else:
+
+            def create_partition(i, j):
+                return cls.frame_partition_cls(
+                    partition_ids[i][j], length=row_lengths[i], width=column_widths[j]
+                )
+
         return np.array(
             [
-                [
-                    cls.frame_partition_cls(
-                        partition_ids[i][j],
-                        length=row_lengths[i],
-                        width=column_widths[j],
-                    )
-                    for j in range(len(partition_ids[i]))
-                ]
+                [create_partition(i, j) for j in range(len(partition_ids[i]))]
                 for i in range(len(partition_ids))
             ]
         )
@@ -375,8 +386,12 @@ class TextFileDispatcher(FileDispatcher):
         partition_ids = []
         index_ids = []
         dtypes_ids = []
+        gpu_manager = 0
         for start, end in splits:
             partition_kwargs.update({"start": start, "end": end})
+            if Backend.get() == 'Cudf':
+                    partition_kwargs.update({"gpu": gpu_manager})
+                    gpu_manager += 1
             partition_id = cls.deploy(
                 cls.parse, partition_kwargs.get("num_splits") + 2, partition_kwargs
             )

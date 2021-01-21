@@ -21,7 +21,7 @@ import sys
 from typing import Union, Sequence, Callable, Dict, Tuple
 from pandas._typing import FilePathOrBuffer
 
-from modin.config import NPartitions
+from modin.config import NPartitions, Backend
 
 ReadCsvKwargsType = Dict[
     str, Union[str, int, bool, dict, object, Sequence, Callable, Dialect, None]
