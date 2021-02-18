@@ -21,7 +21,7 @@ import sys
 from typing import Union, Sequence, Callable, Dict, Tuple
 from pandas._typing import FilePathOrBuffer
 
-from modin.config import NPartitions
+from modin.config import NPartitions, Backend
 
 ReadCsvKwargsType = Dict[
     str, Union[str, int, bool, dict, object, Sequence, Callable, Dialect, None]
@@ -292,7 +292,7 @@ class CSVDispatcher(TextFileDispatcher):
             row_lengths,
             column_widths,
             dtypes=dtypes,
-        )
+        )        
         new_query_compiler = cls.query_compiler_cls(new_frame)
         skipfooter = kwargs.get("skipfooter", None)
         if skipfooter:
