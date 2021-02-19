@@ -129,7 +129,6 @@ class CSVDispatcher(TextFileDispatcher):
                 quotechar=quotechar,
                 is_quoting=is_quoting,
             )
-<<<<<<< HEAD
 
         partition_ids, index_ids, dtypes_ids = cls._launch_tasks(
             splits, **partition_kwargs
@@ -224,22 +223,6 @@ class CSVDispatcher(TextFileDispatcher):
         row_lengths: list
                 Partitions rows lengths.
         """
-=======
- 
-            gpu_manager = 0
-            for start, end in splits:
-                args.update({"start": start, "end": end})
-                if Backend.get() == 'Cudf':
-                    args.update({"gpu": gpu_manager})
-                    gpu_manager += 1
-                partition_id = cls.deploy(cls.parse, num_splits + 2, args)
-                partition_ids.append(partition_id[:-2])
-                index_ids.append(partition_id[-2])
-                dtypes_ids.append(partition_id[-1])
-
-        # Compute the index based on a sum of the lengths of each partition (by default)
-        # or based on the column(s) that were requested.
->>>>>>> FEATURE-#43: Making MODIN-GPU run with toy example
         if index_col is None:
             row_lengths = cls.materialize(index_ids)
             new_index = pandas.RangeIndex(sum(row_lengths))
@@ -311,10 +294,7 @@ class CSVDispatcher(TextFileDispatcher):
             dtypes=dtypes,
         )        
         new_query_compiler = cls.query_compiler_cls(new_frame)
-<<<<<<< HEAD
         skipfooter = kwargs.get("skipfooter", None)
-=======
->>>>>>> FEATURE-#43: Making MODIN-GPU run with toy example
         if skipfooter:
             new_query_compiler = new_query_compiler.drop(
                 new_query_compiler.index[-skipfooter:]
