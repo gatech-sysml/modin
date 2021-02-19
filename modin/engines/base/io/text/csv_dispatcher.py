@@ -292,12 +292,9 @@ class CSVDispatcher(TextFileDispatcher):
             row_lengths,
             column_widths,
             dtypes=dtypes,
-        )        
+        )
         new_query_compiler = cls.query_compiler_cls(new_frame)
-<<<<<<< HEAD
         skipfooter = kwargs.get("skipfooter", None)
-=======
->>>>>>> FEATURE-#43: Making MODIN-GPU run with toy example
         if skipfooter:
             new_query_compiler = new_query_compiler.drop(
                 new_query_compiler.index[-skipfooter:]
