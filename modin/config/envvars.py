@@ -94,11 +94,7 @@ class Backend(EnvironmentVariable, type=str):
 
     varname = "MODIN_BACKEND"
     default = "Pandas"
-<<<<<<< HEAD
-    choices = ("Pandas", "OmniSci", "Pyarrow", "cuDF")
-=======
     choices = ("Pandas", "OmniSci", "Pyarrow", "Cudf")
->>>>>>> modin-gpu-baseline
 
 
 class IsExperimental(EnvironmentVariable, type=bool):
@@ -164,11 +160,7 @@ class NPartitions(EnvironmentVariable, type=int):
 
     @classmethod
     def _get_default(cls):
-<<<<<<< HEAD
-        if Backend.get() == "cuDF":
-=======
         if Backend.get() == "Cudf":
->>>>>>> modin-gpu-baseline
             return GpuCount.get()
         else:
             return CpuCount.get()
