@@ -14,17 +14,16 @@
 import ray
 import cudf
 import pandas
-from .partition import cuDFOnRayFramePartition ## imported from partition.py.
+from .partition import cuDFOnRayFramePartition 
 
 
-# ray remote -- parallelizes a class/function
+
 @ray.remote(num_gpus=1) 
 class GPUManager(object):
 
-    # constructor/initializer method, takes gpu_id.
     def __init__(self, gpu_id):
         self.key = 0
-        self.cudf_dataframe_dict = {}  # holds cudf DataFrames or cudf Series.
+        self.cudf_dataframe_dict = {}  
         self.gpu_id = gpu_id
    
     ## TODO(#45): Merge apply and apply_non_persistent
@@ -56,7 +55,6 @@ class GPUManager(object):
         else:
             result = func(df1, df2, **kwargs)
         return result
-        
 
     def apply(self, first, other, func, **kwargs):
         """ 
@@ -95,19 +93,9 @@ class GPUManager(object):
         result = func(df1, df2, **kwargs)
         return self.store_new_df(result)
 
-    # reduce
-    # we join via cudf.DataFrame join if the axis isn't real/doesn't exist,
-    # else, we run a lambda expression, where we take in params x,y, and concat them.
-    # if others[0] isnt an integer, we assume it's an object id, and we get the actual
-    # information. Else, we do list comprehension. We create a list of items/dataframes/oids.
-    # DF1 = the value of indexing into dataframe_dict with first.
-    # DF2 = the first value of oids/other_dfs (it has to be fixed).
-    # we iterate through the length of the others array, joining these items together.
-    # then we run a function on df1, drf2, and we store the result into the dataframe_dict
-    # and return the key.
     def reduce(self, first, others, func, axis=0, **kwargs):
         """ 
-        Given two keys, apply a function using the dataFrames from
+        Given two keys, apply a function using the cudf.dataFrames from
         the cudf_dataframe_dict associated with the keys.
         Store the return value of the function (a new cudf_DataFrame)
         into cudf_dataframe_dict. Return the new key associated with this value 
@@ -120,17 +108,16 @@ class GPUManager(object):
             other : int
                 The second key. If it isn't a real key, then it's an objectRef, and we must get the actual dataFrame
                 with ray.get(other).
-                instead of three.
             func : func
                 A function that we will use/apply on the two other params (first, other).
-            axis : ? (what type)
+            axis 
                 An axis corresponding to a particular row/column of the dataFrame.
             **kwargs: dict
-                An iterable object that corresponds to a dict, if i'm not mistaken.  
+                An iterable object that corresponds to a dict.  
         Returns
         -------
             self.store_new_df(result) : int
-                the new key of the new dataFrame stored in cudf_dataframe_dict.
+                the new key of the new dataFrame stored in cudf_dataframe_dict (given as an OID).
         """
         join_func = (
             cudf.DataFrame.join if not axis else lambda x, y: cudf.concat([x, y])
@@ -148,22 +135,21 @@ class GPUManager(object):
 
     def store_new_df(self, df):
         """
-        Store a new cudf_dataFrame in the dataframe_dict.
-        Iterate the current key int, and store the dataFrame in the dict
-        with this new iterated key
-        Return the key associated with this new cudf_dataFrame.
+        Store a new cudf.dataFrame in the dataframe_dict.
+        We save a cudf.DataFrame in the next available unique key.
+        Return this new key associated with this new cudf.dataFrame.
         
-        Will be an OID corresponding to an int key.        
+        Will return an OID corresponding to an int key.        
 
         Parameters 
         ----------
-            df : dataFrame
-                This is a dataFrame we're adding to cudf_dataframe_dict.
+            df : cudf.dataFrame
+                This is a cudf.dataFrame we're adding to cudf_dataframe_dict.
         
         Returns 
         ------
             self.key : int
-                This is the key associated the value dataFrame we passed in.
+                This is the key associated the with the cudf.dataFrame we passed in/saved.
 
         """
         self.key += 1
@@ -215,23 +201,24 @@ class GPUManager(object):
 
     def put(self, pandas_df):
         """
-        Given a pandas_df object, 
-        convert it to a cudf_DataFrame, and add it to the cudf_dataframe_dict. 
+        Given a pandas.DataFrame, 
+        convert it to a cudf.DataFrame, and add it to the cudf_dataframe_dict. 
         Return the new key added to the dictionary (as an OID).
         
         Parameters
         ----------
-            pandas_df : pandas_df
-                the pandas dataFrame object.
-                It may or may not be a pandas.Series object. 
-                If it is, convert it to a dataFrame.
-                Then, convert it to a cudf.dataFrame.
+            pandas_df : pandas.dataFrame/pandas.Series
+                the pandas dataFrame object. 
+                If it is a pandas.Series object, 
+                convert it to a pandas.dataFrame.
+                No matter what, the pandas.dataFrame
+                will be converted to a cudf.dataFrame.
 
         Returns
         -------
             an oid corresponding to the key generated 
-            when you added the new cudf_DataFrame object to the cudf_dataframe_dict.
+            when you added the new cudf.DataFrame object to the cudf_dataframe_dict.
         """
-        if isinstance(pandas_df, pandas.Series): # if df instanceof a Pandas.series?
+        if isinstance(pandas_df, pandas.Series): 
             pandas_df = pandas_df.to_frame()
         return self.store_new_df(cudf.from_pandas(pandas_df))
