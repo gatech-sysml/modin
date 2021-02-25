@@ -47,6 +47,7 @@ class GPUManager(object):
         return self.store_new_df(result)
 
     def reduce(self, first, others, func, axis=0, **kwargs):
+        print(func)
         join_func = (
             cudf.DataFrame.join if not axis else lambda x, y: cudf.concat([x, y])
         )
@@ -55,10 +56,9 @@ class GPUManager(object):
         else:
             other_dfs = [self.cudf_dataframe_dict[i] for i in others]
         df1 = self.cudf_dataframe_dict[first]
-        df2 = others[0] if len(others) >= 1 else None
-        for i in range(1, len(others)):
-            df2 = join_func(df2, other_dfs[i])
-        result = func(df1, df2, **kwargs)
+        df2 = cudf.concat(other_dfs) if len(other_dfs) >= 1 else other_dfs
+
+        result = func(df1, df2, **kwargs) if kwargs else func(df1, df2)
         return self.store_new_df(result)
 
     def store_new_df(self, df):
@@ -72,6 +72,9 @@ class GPUManager(object):
 
     def get_id(self):
         return self.gpu_id
+    
+    def get(self, df_key):
+        return self.cudf_dataframe_dict[df_key]
 
     def get_oid(self, key):
         return self.cudf_dataframe_dict[key]

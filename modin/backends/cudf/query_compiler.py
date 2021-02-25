@@ -202,8 +202,66 @@ class cuDFQueryCompiler(PandasQueryCompiler):
     # nature. They require certain data to exist on the same partition, and
     # after the shuffle, there should be only a local map required.
 
-    # def merge(self, right, **kwargs):
-    #     return JoinFunction.register(cudf.DataFrame.merge)(self, right=right, **kwargs)
+    def merge(self, right, **kwargs):
+        """
+        Merge DataFrame or named Series objects with a database-style join.
+
+        Parameters
+        ----------
+        right : PandasQueryCompiler
+            The query compiler of the right DataFrame to merge with.
+
+        Returns
+        -------
+        PandasQueryCompiler
+            A new query compiler that contains result of the merge.
+
+        Notes
+        -----
+        See pd.merge or pd.DataFrame.merge for more info on kwargs.
+        """
+        kwargs.pop("copy")
+        kwargs.pop("validate")
+        how = kwargs.get("how", "inner")
+        on = kwargs.get("on", None)
+        left_on = kwargs.get("left_on", None)
+        right_on = kwargs.get("right_on", None)
+        left_index = kwargs.get("left_index", False)
+        right_index = kwargs.get("right_index", False)
+        sort = kwargs.get("sort", False)
+
+        if how in ["left", "inner"] and left_index is False and right_index is False:
+            def merge_handler(left, right, kwargs=kwargs):
+                return cudf.merge(left, right, **kwargs)
+
+            new_self = self.__constructor__(
+                self._modin_frame.broadcast_apply(1, merge_handler, right._modin_frame, join_type=how, preserve_labels=False, dtypes=None)
+            )
+            is_reset_index = True
+            if left_on and right_on:
+                left_on = left_on if is_list_like(left_on) else [left_on]
+                right_on = right_on if is_list_like(right_on) else [right_on]
+                is_reset_index = (
+                    False
+                    if any(o in new_self.index.names for o in left_on)
+                    and any(o in right.index.names for o in right_on)
+                    else True
+                )
+                # TODO(lepl3): Here the sort kwarg should be handled!
+            if on:
+                on = on if is_list_like(on) else [on]
+                is_reset_index = not any(
+                    o in new_self.index.names and o in right.index.names for o in on
+                )
+                if sort:
+                    new_self = (
+                        new_self.sort_rows_by_column_values(on)
+                        if is_reset_index
+                        else new_self.sort_index(axis=0, level=on)
+                    )
+            return new_self.reset_index(drop=True) if is_reset_index else new_self
+        else:
+            return self.default_to_pandas(pandas.DataFrame.merge, right, **kwargs)
 
     # TODO(lepl3): Hacky solution meanwhile we decide whether or not to implement
     # from scratch pivot or cudf release pivot_table.
@@ -285,9 +343,9 @@ class cuDFQueryCompiler(PandasQueryCompiler):
     # TODO(lepl3): Investigate how cudf handles bool operator in differnt axis
     __and__ = BinaryFunction.register(cudf.DataFrame.__and__)
     __or__ = BinaryFunction.register(cudf.DataFrame.__or__)
-    __rand__ = BinaryFunction.register(cudf.DataFrame.__rand__)
-    __ror__ = BinaryFunction.register(cudf.DataFrame.__ror__)
-    __rxor__ = BinaryFunction.register(cudf.DataFrame.__rxor__)
+    #__rand__ = BinaryFunction.register(cudf.DataFrame.__rand__)
+    #__ror__ = BinaryFunction.register(cudf.DataFrame.__ror__)
+    #__rxor__ = BinaryFunction.register(cudf.DataFrame.__rxor__)
     __xor__ = BinaryFunction.register(cudf.DataFrame.__xor__)
 
     # TODO(kvu35): Figure out why PandasQueryCompiler requires two passes

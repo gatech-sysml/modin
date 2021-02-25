@@ -14,6 +14,7 @@
 import numpy as np
 import pandas
 
+from modin.engines.ray.generic.frame.partition_manager import RayFrameManager
 from modin.error_message import ErrorMessage
 
 from pandas.api.types import union_categoricals
@@ -35,7 +36,7 @@ def func(df, other, apply_func):
     return apply_func(ray.get(df.get.remote()), ray.get(other.get.remote()))
 
 
-class cuDFOnRayFrameManager(object):
+class cuDFOnRayFrameManager(RayFrameManager):
 
     _partition_class = cuDFOnRayFramePartition
     _column_partitions_class = cuDFOnRayFrameColumnPartition
@@ -302,26 +303,44 @@ class cuDFOnRayFrameManager(object):
         Returns:
             A new `np.array` of partition objects.
         """
+        preprocessed_func = cls.preprocess_func(apply_func)
         if right.shape == (1, 1):
             right_parts = right[0]
         else:
             right_parts = np.squeeze(right)
 
-        [obj.drain_call_queue() for obj in right_parts]
-        return np.array(
-            [
-                [
-                    part.apply(
-                        apply_func,
-                        r=right_parts[col_idx].get()
-                        if axis
-                        else right_parts[row_idx].get(),
-                    )
-                    for col_idx, part in enumerate(left[row_idx])
-                ]
-                for row_idx in range(len(left))
-            ]
-        )
+        if left.shape == (1, 1):
+            left_parts = right[0]
+        else:
+            left_parts = np.squeeze(right)
+        print(apply_func)
+        print(left_parts[0].get_gpu_manager())
+        import time 
+        start = time.time()
+        new_arr = [rp.get() for rp in right_parts]
+        print(f"{time.time() - start} -----------!!!--------")
+        print(new_arr)
+        
+        result = [lp.reduce(new_arr, preprocessed_func) for lp in left_parts]
+        print(f"{time.time() - start} --------------------")
+        print(ray.get(result))
+        print(result)
+
+        #[obj.drain_call_queue() for obj in right_parts]
+        # return np.array(
+        #     [
+        #         [
+        #             part.apply(
+        #                 apply_func,
+        #                 r=right_parts[col_idx].get()
+        #                 if axis
+        #                 else right_parts[row_idx].get(),
+        #             )
+        #             for col_idx, part in enumerate(left[row_idx])
+        #         ]
+        #         for row_idx in range(len(left))
+        #     ]
+        # )
 
     @classmethod
     def concat(cls, axis, left_parts, right_parts):

@@ -15,11 +15,11 @@ import cudf
 import ray
 
 from .partition import cuDFOnRayFramePartition
+from modin.engines.base.frame.axis_partition import PandasFrameAxisPartition
 
-
-class cuDFOnRayFrameAxisPartition(object):
+class cuDFOnRayFrameAxisPartition(PandasFrameAxisPartition):
     def __init__(self, partitions):
-        self.partitions = [obj for obj in partitions]
+        self.list_of_blocks = [obj for obj in partitions]
 
     partition_type = cuDFOnRayFramePartition
     instance_type = cudf.DataFrame
@@ -29,8 +29,8 @@ class cuDFOnRayFrameColumnPartition(cuDFOnRayFrameAxisPartition):
     axis = 0
 
     def reduce(self, func):
-        keys = [partition.get_key() for partition in self.partitions]
-        gpu_managers = [partition.get_gpu_manager() for partition in self.partitions]
+        keys = [partition.get_key() for partition in self.partitilist_of_blocksons]
+        gpu_managers = [partition.get_gpu_manager() for partition in self.list_of_blocks]
         head_gpu_manager = gpu_managers[0]
         cudf_dataframe_object_ids = [
             gpu_manager.get.remote(key) for gpu_manager, key in zip(gpu_managers, keys)
@@ -49,8 +49,8 @@ class cuDFOnRayFrameRowPartition(cuDFOnRayFrameAxisPartition):
     # Since we are using row partitions, we can bypass the ray plasma store during axis reduction
     # functions.
     def reduce(self, func):
-        keys = [partition.get_key() for partition in self.partitions]
-        gpu = self.partitions[0].get_gpu_manager()
+        keys = [partition.get_key() for partition in self.list_of_blocks]
+        gpu = self.list_of_blocks[0].get_gpu_manager()
         key = gpu.reduce_key_list.remote(keys, func)
         key = ray.get(key)
         return cuDFOnRayFramePartition(gpu_manager=gpu, key=key)

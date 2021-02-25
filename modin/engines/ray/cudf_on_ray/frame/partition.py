@@ -57,6 +57,9 @@ class cuDFOnRayFramePartition(BaseFramePartition):
             return self._width_cache
         return self.gpu_manager.width.remote(self.get_key())
 
+    def reduce(self, others, func, axis=0):
+        return self.gpu_manager.reduce.remote(self.get_key(), others, func, axis=1)
+
     def mask(self, row_indices, col_indices):
         def func(df, row_indices, col_indices):
             # CuDF currently does not support indexing multiindices with arrays,
