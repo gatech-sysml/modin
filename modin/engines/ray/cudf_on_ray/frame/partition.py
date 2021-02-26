@@ -86,8 +86,8 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         Note: This is a classmethod because the definition of how to preprocess
             should be class-wide.
 
-        Args
-        ----
+        Parameters
+        ----------
         func : callable
             The function to preprocess.
 
@@ -112,7 +112,8 @@ class cuDFOnRayFramePartition(BaseFramePartition):
     def mask(self, row_indices, col_indices):
         """Lazily create a mask that extracts the indices provided.
 
-        Args:
+        Parameters
+        ----------
             row_indices: The indices for the rows to extract.
             col_indices: The indices for the columns to extract.
 
