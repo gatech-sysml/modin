@@ -162,6 +162,20 @@ def _build_apply_func(func, axis=0, reduce_func=None, *args, **kwargs):
 
 
 class cuDFQueryCompiler(PandasQueryCompiler):
+    # __getitem__ methods
+    def getitem_array(self, key):
+        if isinstance(key, type(self)) and all(key.dtypes == np.bool):
+            # TODO(kvu35): Additional dimensional checks necessary?
+            return self.__constructor__(
+                self._modin_frame.broadcast_apply_full_axis(
+                    0,
+                    lambda l, r: l[r],
+                    key._modin_frame,
+                )
+            )
+        else:
+            return super(cuDFQueryCompiler, self).getitem_array(key)
+
     def drop(self, index=None, columns=None):
         if index is not None:
             # The unique here is to avoid duplicating rows with the same name
