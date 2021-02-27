@@ -44,12 +44,27 @@ class PyarrowOnRayFramePartition(PandasOnRayFramePartition):
 
     @classmethod
     def length_extraction_fn(cls):
+        """Compute the length of the object in this partition.
+
+        Returns:
+            A callable function.
+        """
         return lambda table: table.num_rows
 
     @classmethod
     def width_extraction_fn(cls):
+        """Compute the width of the object in this partition.
+
+        Returns:
+            A callable function.
+        """
         return lambda table: table.num_columns - (1 if "index" in table.columns else 0)
 
     @classmethod
     def empty(cls):
+        """Create an empty partition.
+
+        Returns:
+            An empty partition
+        """
         return cls.put(pandas.DataFrame())

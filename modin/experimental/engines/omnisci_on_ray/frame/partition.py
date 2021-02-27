@@ -20,9 +20,11 @@ import ray
 
 
 class OmnisciOnRayFramePartition(BaseFramePartition):
+
     def __init__(
         self, object_id=None, frame_id=None, arrow_table=None, length=None, width=None
     ):
+        """Initialize the OmnisciOnRayFramePartition object."""
         assert type(object_id) is ray.ObjectRef
 
         self.oid = object_id
@@ -32,6 +34,16 @@ class OmnisciOnRayFramePartition(BaseFramePartition):
         self._width_cache = width
 
     def to_pandas(self):
+        """
+        Convert the object stored in this partition to a Pandas DataFrame.
+
+        Note: If the underlying object is a Pandas DataFrame, this will likely
+            only need to call `get`
+
+        Returns
+        -------
+            A Pandas DataFrame.
+        """
         obj = self.get()
         if isinstance(obj, (pandas.DataFrame, pandas.Series)):
             return obj
@@ -39,12 +51,38 @@ class OmnisciOnRayFramePartition(BaseFramePartition):
         return obj.to_pandas()
 
     def get(self):
+        """
+        Return the object wrapped by this one to the original format.
+
+        Note: This is the opposite of the classmethod `put`.
+            E.g. if you assign `x = cuDFOnRayFramePartition.put(1)`, `x.get()` should
+            always return 1.
+
+        Returns
+        -------
+            The object that was `put`.
+        """
         if self.arrow_table is not None:
             return self.arrow_table
         return ray.get(self.oid)
 
     @classmethod
     def put(cls, obj):
+        """
+        Format a given object.
+        Store the given object obj in Ray, and put its details into a new frame
+        partition object, which is then returned.
+
+        Parameters
+        ----------
+            obj
+                The object to be stored in Ray.
+
+        Returns
+        -------
+            An OmnisciOnRayFramePartition object with details on the object ID in Ray,
+            and number of rows and columns.
+        """
         return OmnisciOnRayFramePartition(
             object_id=ray.put(obj),
             length=len(obj.index),
@@ -53,6 +91,21 @@ class OmnisciOnRayFramePartition(BaseFramePartition):
 
     @classmethod
     def put_arrow(cls, obj):
+        """
+        Format a given object.
+        Store the given pyarrow object obj in Ray, and put its details into a new frame
+        partition object, which is then returned.
+
+        Parameters
+        ----------
+            obj
+                The pyarrow object to be stored in Ray.
+
+        Returns
+        -------
+            An OmnisciOnRayFramePartition object with details on the object ID in Ray,
+            arrow table, and number of rows and columns.
+        """
         return OmnisciOnRayFramePartition(
             object_id=ray.put(None),
             arrow_table=obj,
