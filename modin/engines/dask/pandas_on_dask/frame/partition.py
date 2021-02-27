@@ -57,7 +57,8 @@ class PandasOnDaskFramePartition(BaseFramePartition):
 
         Note: Since this object is a simple wrapper, just return the data.
 
-        Returns:
+        Returns
+        -------
             The object that was `put`.
         """
         self.drain_call_queue()
@@ -73,11 +74,13 @@ class PandasOnDaskFramePartition(BaseFramePartition):
             an important part of many implementations. As of right now, they
             are not serialized.
 
-        Args:
-            func: The lambda to apply (may already be correctly formatted)
+        Parameters
+        ----------
+            func : callable
+                The lambda to apply (may already be correctly formatted)
 
         Returns:
-             A new `BaseFramePartition` containing the object that has had `func`
+             A new `PandasOnDaskFramePartition` containing the object that has had `func`
              applied to it.
         """
         func = pkl.dumps(func)
@@ -89,11 +92,26 @@ class PandasOnDaskFramePartition(BaseFramePartition):
         return PandasOnDaskFramePartition(futures[0], ip=futures[1])
 
     def add_to_apply_calls(self, func, **kwargs):
+        """Add the function to the apply function call stack.
+
+        Note: This function will be executed when apply is called. It will be executed
+        in the order inserted; apply's func operates the last and return
+
+        Parameters
+        ----------
+        func : callable
+            The function to apply.
+
+        Returns
+        -------
+            A new `PandasOnDaskFramePartition` with the function added to the call queue.
+        """
         return PandasOnDaskFramePartition(
             self.future, call_queue=self.call_queue + [[pkl.dumps(func), kwargs]]
         )
 
     def drain_call_queue(self):
+        """Execute all functionality stored in the call queue."""
         if len(self.call_queue) == 0:
             return
         new_partition = self.apply(lambda x: x)
@@ -106,6 +124,17 @@ class PandasOnDaskFramePartition(BaseFramePartition):
         wait(self.future)
 
     def mask(self, row_indices, col_indices):
+        """Lazily create a mask that extracts the indices provided.
+
+        Parameters
+        ----------
+            row_indices: The indices for the rows to extract.
+            col_indices: The indices for the columns to extract.
+
+        Returns
+        -------
+            A `PandasOnDaskFramePartition` object.
+        """
         new_obj = self.add_to_apply_calls(
             lambda df: pandas.DataFrame(df.iloc[row_indices, col_indices])
         )
@@ -152,10 +181,12 @@ class PandasOnDaskFramePartition(BaseFramePartition):
     def put(cls, obj):
         """A factory classmethod to format a given object.
 
-        Args:
+        Parameters
+        ----------
             obj: An object.
 
-        Returns:
+        Returns
+        -------
             A `RemotePartitions` object.
         """
         client = get_client()
@@ -170,10 +201,13 @@ class PandasOnDaskFramePartition(BaseFramePartition):
             deploy a preprocessed function to multiple `BaseFramePartition`
             objects.
 
-        Args:
-            func: The function to preprocess.
+        Parameters
+        ----------
+            func : callable
+            The function to preprocess.
 
-        Returns:
+        Returns
+        -------
             An object that can be accepted by `apply`.
         """
         return func
@@ -182,7 +216,8 @@ class PandasOnDaskFramePartition(BaseFramePartition):
     def length_extraction_fn(cls):
         """The function to compute the length of the object in this partition.
 
-        Returns:
+        Returns
+        -------
             A callable function.
         """
         return length_fn_pandas
@@ -191,7 +226,8 @@ class PandasOnDaskFramePartition(BaseFramePartition):
     def width_extraction_fn(cls):
         """The function to compute the width of the object in this partition.
 
-        Returns:
+        Returns
+        -------
             A callable function.
         """
         return width_fn_pandas
@@ -200,6 +236,7 @@ class PandasOnDaskFramePartition(BaseFramePartition):
     _width_cache = None
 
     def length(self):
+        """Return the length of partition."""
         if self._length_cache is None:
             self._length_cache = self.apply(lambda df: len(df)).future
         if isinstance(self._length_cache, Future):
@@ -207,6 +244,7 @@ class PandasOnDaskFramePartition(BaseFramePartition):
         return self._length_cache
 
     def width(self):
+        """Return the width of partition."""
         if self._width_cache is None:
             self._width_cache = self.apply(lambda df: len(df.columns)).future
         if isinstance(self._width_cache, Future):
@@ -222,4 +260,10 @@ class PandasOnDaskFramePartition(BaseFramePartition):
 
     @classmethod
     def empty(cls):
+        """Create an empty partition.
+
+        Returns
+        -------
+            An empty partition
+        """
         return cls(pandas.DataFrame(), 0, 0)

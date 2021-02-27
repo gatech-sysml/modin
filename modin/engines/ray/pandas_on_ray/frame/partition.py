@@ -44,7 +44,8 @@ class PandasOnRayFramePartition(BaseFramePartition):
     def get(self):
         """Gets the object out of the plasma store.
 
-        Returns:
+        Returns
+        -------
             The object from the plasma store.
         """
         if len(self.call_queue):
@@ -61,10 +62,12 @@ class PandasOnRayFramePartition(BaseFramePartition):
             handle it correctly either way. The keyword arguments are sent as a
             dictionary.
 
-        Args:
+        Parameters
+        ----------
             func: The function to apply.
 
-        Returns:
+        Returns
+        -------
             A RayRemotePartition object.
         """
         oid = self.oid
@@ -73,11 +76,26 @@ class PandasOnRayFramePartition(BaseFramePartition):
         return PandasOnRayFramePartition(result, length, width, ip)
 
     def add_to_apply_calls(self, func, **kwargs):
+        """Add the function to the apply function call stack.
+
+        Note: This function will be executed when apply is called. It will be executed
+        in the order inserted; apply's func operates the last and return
+
+        Parameters
+        ----------
+        func : callable
+            The function to apply.
+
+        Returns
+        -------
+            A new `PandasOnRayFramePartition` with the function added to the call queue.
+        """
         return PandasOnRayFramePartition(
             self.oid, call_queue=self.call_queue + [(func, kwargs)]
         )
 
     def drain_call_queue(self):
+        """Execute all functionality stored in the call queue."""
         if len(self.call_queue) == 0:
             return
         oid = self.oid
@@ -98,6 +116,9 @@ class PandasOnRayFramePartition(BaseFramePartition):
             handle_ray_task_error(e)
 
     def __copy__(self):
+        """
+        Create a copy of the data frame partition.
+        """
         return PandasOnRayFramePartition(
             self.oid,
             length=self._length_cache,
@@ -109,7 +130,8 @@ class PandasOnRayFramePartition(BaseFramePartition):
     def to_pandas(self):
         """Convert the object stored in this partition to a Pandas DataFrame.
 
-        Returns:
+        Returns
+        -------
             A Pandas DataFrame.
         """
         dataframe = self.get()
@@ -127,6 +149,17 @@ class PandasOnRayFramePartition(BaseFramePartition):
         return self.apply(lambda df, **kwargs: df.to_numpy(**kwargs)).get()
 
     def mask(self, row_indices, col_indices):
+        """Lazily create a mask that extracts the indices provided.
+
+        Parameters
+        ----------
+            row_indices: The indices for the rows to extract.
+            col_indices: The indices for the columns to extract.
+
+        Returns
+        -------
+            A `BaseFramePartition` object.
+        """
         if (
             (isinstance(row_indices, slice) and row_indices == slice(None))
             or (
@@ -157,10 +190,12 @@ class PandasOnRayFramePartition(BaseFramePartition):
     def put(cls, obj):
         """Put an object in the Plasma store and wrap it in this object.
 
-        Args:
+        Parameters
+        ----------
             obj: The object to be put.
 
-        Returns:
+        Returns
+        -------
             A `RayRemotePartition` object.
         """
         return PandasOnRayFramePartition(ray.put(obj), len(obj.index), len(obj.columns))
@@ -169,15 +204,18 @@ class PandasOnRayFramePartition(BaseFramePartition):
     def preprocess_func(cls, func):
         """Put a callable function into the plasma store for use in `apply`.
 
-        Args:
+        Parameters
+        ----------
             func: The function to preprocess.
 
-        Returns:
+        Returns
+        -------
             A ray.ObjectRef.
         """
         return ray.put(func)
 
     def length(self):
+        """Return the length of partition."""
         if self._length_cache is None:
             if len(self.call_queue):
                 self.drain_call_queue()
@@ -193,6 +231,7 @@ class PandasOnRayFramePartition(BaseFramePartition):
         return self._length_cache
 
     def width(self):
+        """Return the width of partition."""
         if self._width_cache is None:
             if len(self.call_queue):
                 self.drain_call_queue()
@@ -222,24 +261,57 @@ class PandasOnRayFramePartition(BaseFramePartition):
 
     @classmethod
     def length_extraction_fn(cls):
+        """Compute the length of the object in this partition.
+
+        Returns
+        -------
+            A callable function.
+        """
         return length_fn_pandas
 
     @classmethod
     def width_extraction_fn(cls):
+        """Compute the width of the object in this partition.
+
+        Returns
+        -------
+            A callable function.
+        """
         return width_fn_pandas
 
     @classmethod
     def empty(cls):
+        """Create an empty partition.
+
+        Returns
+        -------
+            An empty partition
+        """
         return cls.put(pandas.DataFrame())
 
 
 @ray.remote(num_returns=2)
 def get_index_and_columns(df):
+    """Return the index and columns of partition."""
     return len(df.index), len(df.columns)
 
 
 @ray.remote(num_returns=4)
 def deploy_ray_func(call_queue, partition):  # pragma: no cover
+    """
+    Remotely run functions in the call queue on the given partition with Ray.
+
+    Parameters
+    ----------
+        call_queue
+            The call queue contains a list of functions to be run.
+        partition
+            The partition on which functions are applied/called.
+
+    Returns
+    -------
+        Results of the functions called.
+    """
     def deserialize(obj):
         if isinstance(obj, ObjectIDType):
             return ray.get(obj)
