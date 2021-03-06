@@ -36,10 +36,10 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         self._width_cache = width
 
     def apply(self, func, **kwargs):
-        return self.gpu_manager.apply.remote(self.get_key(), None, func, **kwargs)
+        return self.gpu_manager.apply.remote(self.get_key(), func, **kwargs)
 
     def apply_result_not_dataframe(self, func, **kwargs):
-        return self.gpu_manager.apply_result_not_dataframe.remote(
+        return self.gpu_manager.apply_non_persistent.remote(
             self.get_key(), func, **kwargs
         )
 
@@ -50,15 +50,21 @@ class cuDFOnRayFramePartition(BaseFramePartition):
     def length(self):
         if self._length_cache:
             return self._length_cache
-        return self.gpu_manager.length.remote(self.get_key())
+        
+        length = lambda x: x.shape[0]
+        self._length_cache = ray.get(self.gpu_manager.apply_non_persistent.remote(self.get_key(), length))
+        return self._length_cache
 
     def width(self):
         if self._width_cache:
             return self._width_cache
-        return self.gpu_manager.width.remote(self.get_key())
 
-    def reduce(self, others, func, axis=0):
-        return self.gpu_manager.reduce.remote(self.get_key(), others, func, axis=1)
+        width = lambda x: x.shape[1]
+        self._width_cache = ray.get(self.gpu_manager.apply_non_persistent.remote(self.get_key(), width))
+        return self._width_cache
+
+    def reduce(self, func, others=None, axis=0):
+        return self.gpu_manager.reduce.remote(self.get_key(), func, others, axis=1)
 
     def mask(self, row_indices, col_indices):
         def func(df, row_indices, col_indices):
@@ -102,7 +108,7 @@ class cuDFOnRayFramePartition(BaseFramePartition):
 
     def to_pandas(self):
         return self.gpu_manager.apply_non_persistent.remote(
-            self.get_key(), None, cudf.DataFrame.to_pandas
+            self.get_key(), cudf.DataFrame.to_pandas
         )
 
     def to_numpy(self):

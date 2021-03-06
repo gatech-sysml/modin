@@ -23,8 +23,8 @@ class GPUManager(object):
         self.cudf_dataframe_dict = {}
         self.gpu_id = gpu_id
 
-    ## TODO(#45): Merge apply and apply_non_persistent
-    def apply_non_persistent(self, first, other, func, **kwargs):
+    ## TODO(b/45): Merge apply and apply_non_persistent
+    def apply_non_persistent(self, first, func, other=None, **kwargs):
         df1 = self.cudf_dataframe_dict[first]
         df2 = self.cudf_dataframe_dict[other] if other else None
         if not df2:
@@ -33,7 +33,7 @@ class GPUManager(object):
             result = func(df1, df2, **kwargs)
         return result
 
-    def apply(self, first, other, func, **kwargs):
+    def apply(self, first, func, other=None, **kwargs):
         df1 = self.cudf_dataframe_dict[first]
         if not other:
             result = func(df1, **kwargs)
@@ -46,8 +46,7 @@ class GPUManager(object):
         result = func(df1, df2, **kwargs)
         return self.store_new_df(result)
 
-    def reduce(self, first, others, func, axis=0, **kwargs):
-        print(func)
+    def reduce(self, first, func, others=None, axis=0, **kwargs):
         join_func = (
             cudf.DataFrame.join if not axis else lambda x, y: cudf.concat([x, y])
         )
@@ -56,8 +55,7 @@ class GPUManager(object):
         else:
             other_dfs = [self.cudf_dataframe_dict[i] for i in others]
         df1 = self.cudf_dataframe_dict[first]
-        df2 = cudf.concat(other_dfs) if len(other_dfs) >= 1 else other_dfs
-
+        df2 = cudf.concat(other_dfs) if len(other_dfs) > 1 else other_dfs[0]
         result = func(df1, df2, **kwargs) if kwargs else func(df1, df2)
         return self.store_new_df(result)
 
@@ -65,7 +63,7 @@ class GPUManager(object):
         self.key += 1
         self.cudf_dataframe_dict[self.key] = df
         return self.key
-
+   
     def free(self, key):
         if key in self.cudf_dataframe_dict:
             del self.cudf_dataframe_dict[key]

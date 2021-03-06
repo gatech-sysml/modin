@@ -115,15 +115,17 @@ class cuDFOnRayFrame(PandasOnRayFrame):
         -------
             BasePandasFrame
         """
-        # Only sort the indices if they do not match
-        left_parts, right_parts, joined_index = self._copartition(
-            axis, other, join_type, sort=not self.axes[axis].equals(other.axes[axis])
+
+        self_index = self.axes[axis]
+        others_index = other.axes[axis]
+        joined_index, _ = self._join_index_objects(
+            axis, [self_index, others_index], how=join_type, sort=False
         )
-        # unwrap list returned by `copartition`.
-        right_parts = right_parts[0]
+
         new_frame = self._frame_mgr_cls.broadcast_apply(
-            axis, func, left_parts, right_parts
+            axis, func, self._partitions, other._partitions
         )
+
         if dtypes == "copy":
             dtypes = self._dtypes
         new_index = self.index
@@ -135,4 +137,36 @@ class cuDFOnRayFrame(PandasOnRayFrame):
                 new_index = joined_index
         return self.__constructor__(
             new_frame, new_index, new_columns, None, None, dtypes=dtypes
+        )
+
+    
+    def _compute_axis_labels(self, axis: int, partitions=None):
+        """
+        Compute the labels for specific `axis`.
+
+        Parameters
+        ----------
+        axis: int
+            Axis to compute labels along
+        partitions: numpy 2D array (optional)
+            Partitions from which labels will be grabbed,
+            if no specified, partitions will be considered as `self._partitions`
+
+        Returns
+        -------
+        Pandas.Index
+            Labels for the specified `axis`
+        """
+        if partitions is None:
+            partitions = self._partitions
+        
+        def get_index_labels(df):
+            if axis == 0:
+                return df.index
+            elif axis == 1:
+                return df.columns
+            else:
+                raise ValueError("Only 0, 1")
+        return self._frame_mgr_cls.get_indices(
+            axis, partitions, get_index_labels
         )

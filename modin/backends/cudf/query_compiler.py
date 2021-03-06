@@ -220,8 +220,10 @@ class cuDFQueryCompiler(PandasQueryCompiler):
         -----
         See pd.merge or pd.DataFrame.merge for more info on kwargs.
         """
+        ## This attributes are not needed by cuDF.
         kwargs.pop("copy")
         kwargs.pop("validate")
+        # TODO(lepl3): Handle sort attribute.
         how = kwargs.get("how", "inner")
         on = kwargs.get("on", None)
         left_on = kwargs.get("left_on", None)
@@ -230,10 +232,31 @@ class cuDFQueryCompiler(PandasQueryCompiler):
         right_index = kwargs.get("right_index", False)
         sort = kwargs.get("sort", False)
 
-        if how in ["left", "inner"] and left_index is False and right_index is False:
+        if how in ["left", "inner", "right"] and left_index is False and right_index is False:
             def merge_handler(left, right, kwargs=kwargs):
                 return cudf.merge(left, right, **kwargs)
 
+            r_size = len(right.index) * len(right.columns)
+            l_size = len(self.index) * len(self.columns)
+            if l_size >= r_size:
+                if how == 'inner':
+                    new_self = self.__constructor__(
+                        self._modin_frame.broadcast_apply(1, merge_handler, right._modin_frame, join_type=how, preserve_labels=False, dtypes=None)
+                    )
+                elif how == 'left':
+                    pass
+                else:
+                    pass
+            else:
+                if how == 'inner':
+                    new_self = self.__constructor__(
+                        right._modin_frame.broadcast_apply(1, merge_handler, self._modin_frame, join_type=how, preserve_labels=False, dtypes=None)
+                    )
+                elif how == 'left':
+                    pass
+                else:
+                    pass 
+                
             new_self = self.__constructor__(
                 self._modin_frame.broadcast_apply(1, merge_handler, right._modin_frame, join_type=how, preserve_labels=False, dtypes=None)
             )
@@ -246,19 +269,13 @@ class cuDFQueryCompiler(PandasQueryCompiler):
                     if any(o in new_self.index.names for o in left_on)
                     and any(o in right.index.names for o in right_on)
                     else True
-                )
-                # TODO(lepl3): Here the sort kwarg should be handled!
+                )       
             if on:
                 on = on if is_list_like(on) else [on]
                 is_reset_index = not any(
                     o in new_self.index.names and o in right.index.names for o in on
                 )
-                if sort:
-                    new_self = (
-                        new_self.sort_rows_by_column_values(on)
-                        if is_reset_index
-                        else new_self.sort_index(axis=0, level=on)
-                    )
+
             return new_self.reset_index(drop=True) if is_reset_index else new_self
         else:
             return self.default_to_pandas(pandas.DataFrame.merge, right, **kwargs)
@@ -343,9 +360,6 @@ class cuDFQueryCompiler(PandasQueryCompiler):
     # TODO(lepl3): Investigate how cudf handles bool operator in differnt axis
     __and__ = BinaryFunction.register(cudf.DataFrame.__and__)
     __or__ = BinaryFunction.register(cudf.DataFrame.__or__)
-    #__rand__ = BinaryFunction.register(cudf.DataFrame.__rand__)
-    #__ror__ = BinaryFunction.register(cudf.DataFrame.__ror__)
-    #__rxor__ = BinaryFunction.register(cudf.DataFrame.__rxor__)
     __xor__ = BinaryFunction.register(cudf.DataFrame.__xor__)
 
     # TODO(kvu35): Figure out why PandasQueryCompiler requires two passes

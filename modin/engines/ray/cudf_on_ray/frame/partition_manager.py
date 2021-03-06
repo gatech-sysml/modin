@@ -93,7 +93,7 @@ class cuDFOnRayFrameManager(RayFrameManager):
     # FIXME (kvu35): Enable work load balancing
     @classmethod
     def map_axis_partitions(
-        cls, axis, partitions, map_func, keep_partitioning=True, persistent=False
+        cls, axis, partitions, map_func, keep_partitioning=True, persistent=False, lengths=None
     ):
         # if keep_partitioning:
         #     num_splits = len(partitions) if axis == 0 else len(partitions.T)
@@ -205,6 +205,7 @@ class cuDFOnRayFrameManager(RayFrameManager):
 
     @classmethod
     def to_pandas(cls, partitions):
+        # lepl3: Can we switch to a more async fashion?
         pandas_partitions = [
             [ray.get(partition.to_pandas()) for partition in row] for row in partitions
         ]
@@ -310,37 +311,23 @@ class cuDFOnRayFrameManager(RayFrameManager):
             right_parts = np.squeeze(right)
 
         if left.shape == (1, 1):
-            left_parts = right[0]
+            left_parts = left[0]
         else:
-            left_parts = np.squeeze(right)
-        print(apply_func)
-        print(left_parts[0].get_gpu_manager())
-        import time 
-        start = time.time()
-        new_arr = [rp.get() for rp in right_parts]
-        print(f"{time.time() - start} -----------!!!--------")
-        print(new_arr)
-        
-        result = [lp.reduce(new_arr, preprocessed_func) for lp in left_parts]
-        print(f"{time.time() - start} --------------------")
-        print(ray.get(result))
-        print(result)
+            left_parts = np.squeeze(left)
 
-        #[obj.drain_call_queue() for obj in right_parts]
-        # return np.array(
-        #     [
-        #         [
-        #             part.apply(
-        #                 apply_func,
-        #                 r=right_parts[col_idx].get()
-        #                 if axis
-        #                 else right_parts[row_idx].get(),
-        #             )
-        #             for col_idx, part in enumerate(left[row_idx])
-        #         ]
-        #         for row_idx in range(len(left))
-        #     ]
-        # )
+        new_arr = [rp.get() for rp in right_parts]
+        keys = [lp.reduce(preprocessed_func, new_arr) for lp in left_parts]
+        
+        # TODO(lepl3): Decide if it is better to retrieve the key right now or later.
+        return np.array(
+            [
+                [
+                    cuDFOnRayFramePartition(left[row_idx][col_idx].get_gpu_manager(), keys[row_idx * len(left[row_idx]) + col_idx])
+                    for col_idx in range(len(left[row_idx]))
+                ]
+                for row_idx in range(len(left))
+            ]
+        )
 
     @classmethod
     def concat(cls, axis, left_parts, right_parts):
