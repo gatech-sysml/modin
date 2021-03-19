@@ -121,8 +121,11 @@ def _update_engine(publisher: Parameter):
         if Backend.get() == "Cudf":
             from modin.engines.ray.cudf_on_ray.frame.gpu_manager import GPUManager
 
-            for i in range(GpuCount.get()):
-                GPU_MANAGERS.append(GPUManager.remote(i))
+            # Check that GPU_MANAGERS is empty because _update_engine can be called multiple times
+            if not GPU_MANAGERS:
+                for i in range(GpuCount.get()):
+                    GPU_MANAGERS.append(GPUManager.remote(i))
+
     elif publisher.get() == "Dask":
         if _is_first_update.get("Dask", True):
             from modin.engines.dask.utils import initialize_dask

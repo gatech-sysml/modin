@@ -272,7 +272,7 @@ class cuDFQueryCompiler(PandasQueryCompiler):
             pandas_tmp.unstack([*range(1, len(columns) + 1)]), type(self._modin_frame)
         )
 
-    # THIS WILL COME WITH CUDF 0.16.0
+    # TODO(kvu35): THIS WILL COME WITH CUDF 0.16.0
     # def unstack(self, level=-1, fill_value=None)
     #     return MapFunction.register(cudf.DataFrame.unstack, dtypes='copy')
     # End
@@ -299,10 +299,13 @@ class cuDFQueryCompiler(PandasQueryCompiler):
     # TODO(lepl3): Investigate how cudf handles bool operator in differnt axis
     __and__ = BinaryFunction.register(cudf.DataFrame.__and__)
     __or__ = BinaryFunction.register(cudf.DataFrame.__or__)
-    __rand__ = BinaryFunction.register(cudf.DataFrame.__rand__)
-    __ror__ = BinaryFunction.register(cudf.DataFrame.__ror__)
-    __rxor__ = BinaryFunction.register(cudf.DataFrame.__rxor__)
     __xor__ = BinaryFunction.register(cudf.DataFrame.__xor__)
+
+    # TODO(kvu35): These operations are not supported on cudf, figure out another way to implement
+    # them
+    # __rand__ = BinaryFunction.register(cudf.DataFrame.__rand__)
+    # __ror__ = BinaryFunction.register(cudf.DataFrame.__ror__)
+    # __rxor__ = BinaryFunction.register(cudf.DataFrame.__rxor__)
 
     # TODO(kvu35): Figure out why PandasQueryCompiler requires two passes
     def where(self, cond, other, **kwargs):

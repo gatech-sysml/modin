@@ -58,9 +58,26 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         return self.gpu_manager.width.remote(self.get_key())
 
     def mask(self, row_indices, col_indices):
-        def func(df, row_indices, col_indices):
-            # CuDF currently does not support indexing multiindices with arrays,
-            # so we have to create a boolean array where the desire indices are true
+        if (
+            (isinstance(row_indices, slice) and row_indices == slice(None))
+            or (
+                not isinstance(row_indices, slice)
+                and self._length_cache is not None
+                and len(row_indices) == self._length_cache
+            )
+        ) and (
+            (isinstance(col_indices, slice) and col_indices == slice(None))
+            or (
+                not isinstance(col_indices, slice)
+                and self._width_cache is not None
+                and len(col_indices) == self._width_cache
+            )
+        ):
+            return self.__copy__()
+        # CuDF currently does not support indexing multiindices with arrays,
+        # so we have to create a boolean array where the desire indices are true.
+        # TODO(kvu35): Check if this functionality is fixed in the latest version of cudf
+        def iloc(df, row_indices, col_indices):
             if isinstance(df.index, cudf.core.multiindex.MultiIndex) and is_list_like(
                 row_indices
             ):
@@ -71,14 +88,10 @@ class cuDFOnRayFramePartition(BaseFramePartition):
                 row_indices = new_row_indices
             return df.iloc[row_indices, col_indices]
 
-        func = ray.put(func)
-        key_future = self.gpu_manager.apply.remote(
-            self.get_key(),
-            func,
-            col_indices=col_indices,
-            row_indices=row_indices,
+        iloc = cuDFOnRayFramePartition.preprocess_func(iloc)
+        return self.gpu_manager.apply.remote(
+            self.key, None, iloc, col_indices=col_indices, row_indices=row_indices
         )
-        return key_future
 
     def get_gpu_manager(self):
         return self.gpu_manager
@@ -88,8 +101,7 @@ class cuDFOnRayFramePartition(BaseFramePartition):
 
     @classmethod
     def put(cls, gpu_manager, pandas_dataframe):
-        key_future = gpu_manager.put.remote(pandas_dataframe)
-        return key_future
+        return gpu_manager.put.remote(pandas_dataframe)
 
     def get_object_id(self):
         return self.gpu_manager.get_object_id.remote(self.get_key())
@@ -98,8 +110,10 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         return self.gpu_manager.get.remote(self.get_key())
 
     def to_pandas(self):
-        return self.gpu_manager.apply_non_persistent.remote(
-            self.get_key(), None, cudf.DataFrame.to_pandas
+        return ray.get(
+            self.gpu_manager.apply_non_persistent.remote(
+                self.get_key(), None, cudf.DataFrame.to_pandas
+            )
         )
 
     def to_numpy(self):
