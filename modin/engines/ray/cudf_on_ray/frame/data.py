@@ -202,6 +202,7 @@ class cuDFOnRayFrame(PandasOnRayFrame):
                 new_dtypes = self.dtypes
             else:
                 new_dtypes = None
+
         key_and_gpus = np.array(
             [
                 [
@@ -220,6 +221,7 @@ class cuDFOnRayFrame(PandasOnRayFrame):
                 or len(row_internal_indices) > 0
             ]
         )
+
         shape = key_and_gpus.shape[:2]
         keys = ray.get(key_and_gpus[:, :, 0].flatten().tolist())
         gpu_managers = key_and_gpus[:, :, 1].flatten().tolist()

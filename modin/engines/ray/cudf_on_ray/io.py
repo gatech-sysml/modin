@@ -15,8 +15,12 @@ from modin.engines.base.io import BaseIO
 from modin.engines.base.io import CSVDispatcher
 from modin.backends.cudf.query_compiler import cuDFQueryCompiler
 from modin.engines.ray.cudf_on_ray.frame.data import cuDFOnRayFrame
-from modin.engines.ray.cudf_on_ray.frame.partition_manager import cuDFOnRayFrameManager
-from modin.engines.ray.cudf_on_ray.frame.partition import cuDFOnRayFramePartition
+from modin.engines.ray.cudf_on_ray.frame.partition_manager import (
+    cuDFOnRayFrameManager,
+)
+from modin.engines.ray.cudf_on_ray.frame.partition import (
+    cuDFOnRayFramePartition,
+)
 
 
 from modin.engines.ray.task_wrapper import RayTask

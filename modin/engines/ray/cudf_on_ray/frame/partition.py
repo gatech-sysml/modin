@@ -35,6 +35,16 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         self._length_cache = length
         self._width_cache = width
 
+    def __copy__(self):
+        # Shallow copy.
+        return cuDFOnRayFramePartition(
+            self.gpu_manager, self.key, self._length_cache, self._width_cache
+        )
+
+    @classmethod
+    def put(cls, gpu_manager, pandas_dataframe):
+        return gpu_manager.put.remote(pandas_dataframe)
+
     def apply(self, func, **kwargs):
         return self.gpu_manager.apply.remote(self.get_key(), None, func, **kwargs)
 
@@ -42,6 +52,12 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         return self.gpu_manager.apply_result_not_dataframe.remote(
             self.get_key(), func, **kwargs
         )
+
+    def add_to_apply_calls(self, func, **kwargs):
+        """
+        Instead of adding to a call_queue we eagerly schedule the apply operation and produce a new partition.
+        """
+        return cuDFOnRayFramePartition(self.gpu_manager, self.apply(func, **kwargs))
 
     @classmethod
     def preprocess_func(cls, func):
@@ -74,6 +90,7 @@ class cuDFOnRayFramePartition(BaseFramePartition):
             )
         ):
             return self.__copy__()
+
         # CuDF currently does not support indexing multiindices with arrays,
         # so we have to create a boolean array where the desire indices are true.
         # TODO(kvu35): Check if this functionality is fixed in the latest version of cudf
@@ -90,7 +107,11 @@ class cuDFOnRayFramePartition(BaseFramePartition):
 
         iloc = cuDFOnRayFramePartition.preprocess_func(iloc)
         return self.gpu_manager.apply.remote(
-            self.key, None, iloc, col_indices=col_indices, row_indices=row_indices
+            self.key,
+            None,
+            iloc,
+            col_indices=col_indices,
+            row_indices=row_indices,
         )
 
     def get_gpu_manager(self):
@@ -98,10 +119,6 @@ class cuDFOnRayFramePartition(BaseFramePartition):
 
     def get_key(self):
         return ray.get(self.key) if isinstance(self.key, ray.ObjectRef) else self.key
-
-    @classmethod
-    def put(cls, gpu_manager, pandas_dataframe):
-        return gpu_manager.put.remote(pandas_dataframe)
 
     def get_object_id(self):
         return self.gpu_manager.get_object_id.remote(self.get_key())
