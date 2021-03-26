@@ -389,9 +389,9 @@ class TextFileDispatcher(FileDispatcher):
         gpu_manager = 0
         for start, end in splits:
             partition_kwargs.update({"start": start, "end": end})
-            if Backend.get() == 'Cudf':
-                    partition_kwargs.update({"gpu": gpu_manager})
-                    gpu_manager += 1
+            if Backend.get() == "Cudf":
+                partition_kwargs.update({"gpu": gpu_manager})
+                gpu_manager += 1
             partition_id = cls.deploy(
                 cls.parse, partition_kwargs.get("num_splits") + 2, partition_kwargs
             )
