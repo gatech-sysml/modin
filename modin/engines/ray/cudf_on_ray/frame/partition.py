@@ -144,11 +144,11 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         return key_future
 
     def get_gpu_manager(self):
-        """Return the GPU manager.""""
+        """Return the GPU manager."""
         return self.gpu_manager
 
     def get_key(self):
-        """Return the key.""""
+        """Return the key."""
         return ray.get(self.key) if isinstance(self.key, ray.ObjectRef) else self.key
 
     @classmethod
@@ -169,7 +169,7 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         return key_future
 
     def get_object_id(self):
-        """Return the object ID stored in Ray.""""
+        """Return the object ID stored in Ray."""
         return self.gpu_manager.get_object_id.remote(self.get_key())
 
     def get(self):

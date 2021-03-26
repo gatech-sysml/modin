@@ -180,19 +180,11 @@ class NPartitions(EnvironmentVariable, type=int):
 
     @classmethod
     def _get_default(cls):
-<<<<<<< HEAD
-<<<<<<< HEAD
         cls._is_default = True
-        return CpuCount.get()
-=======
-        if Backend.get() == "cuDF":
-=======
         if Backend.get() == "Cudf":
->>>>>>> FEATURE-#43: Making MODIN-GPU run with toy example
             return GpuCount.get()
         else:
             return CpuCount.get()
->>>>>>> FEAT-#27: Add environmental variable for cudf backend
 
 
 class RayPlasmaDir(EnvironmentVariable, type=ExactStr):

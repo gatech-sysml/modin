@@ -16,7 +16,7 @@ import numpy as np
 from .partition import cuDFOnRayFramePartition
 from .partition_manager import cuDFOnRayFrameManager
 
-from modin.engines.ray.frame.data import PandasOnRayFrame
+from modin.engines.ray.pandas_on_ray.frame.data import PandasOnRayFrame
 from modin.error_message import ErrorMessage
 
 

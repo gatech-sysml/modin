@@ -285,10 +285,10 @@ class cuDFQueryCompiler(PandasQueryCompiler):
     # TODO(lepl3): Investigate how cudf handles bool operator in differnt axis
     __and__ = BinaryFunction.register(cudf.DataFrame.__and__)
     __or__ = BinaryFunction.register(cudf.DataFrame.__or__)
-    __rand__ = BinaryFunction.register(cudf.DataFrame.__rand__)
-    __ror__ = BinaryFunction.register(cudf.DataFrame.__ror__)
-    __rxor__ = BinaryFunction.register(cudf.DataFrame.__rxor__)
-    __xor__ = BinaryFunction.register(cudf.DataFrame.__xor__)
+    # __rand__ = BinaryFunction.register(cudf.DataFrame.__rand__)
+    # __ror__ = BinaryFunction.register(cudf.DataFrame.__ror__)
+    # __rxor__ = BinaryFunction.register(cudf.DataFrame.__rxor__)
+    # __xor__ = BinaryFunction.register(cudf.DataFrame.__xor__)
 
     # TODO(kvu35): Figure out why PandasQueryCompiler requires two passes
     def where(self, cond, other, **kwargs):
