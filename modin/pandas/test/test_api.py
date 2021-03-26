@@ -68,6 +68,7 @@ def test_top_level_api_equality():
         "Client",
         "dask_client",
         "get_client",
+        "GPU_MANAGERS",
     ]
 
     assert not len(
