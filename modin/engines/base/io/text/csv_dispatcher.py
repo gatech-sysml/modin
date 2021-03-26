@@ -292,7 +292,7 @@ class CSVDispatcher(TextFileDispatcher):
             row_lengths,
             column_widths,
             dtypes=dtypes,
-        )        
+        )
         new_query_compiler = cls.query_compiler_cls(new_frame)
         skipfooter = kwargs.get("skipfooter", None)
         if skipfooter:
