@@ -16,6 +16,7 @@ import os
 import sys
 
 from modin.config import (
+    Backend,
     IsRayCluster,
     RayRedisAddress,
     CpuCount,
@@ -173,6 +174,14 @@ def initialize_ray(
         )
 
         ray.worker.global_worker.run_function_on_all_workers(_import_pandas)
+
+        if Backend.get() == "Cudf":
+            from modin.engines.ray.cudf_on_ray.frame.gpu_manager import GPUManager
+            from modin.engines.ray.cudf_on_ray.frame.partition_manager import GPU_MANAGERS
+            # Check that GPU_MANAGERS is empty because _update_engine can be called multiple times
+            if not GPU_MANAGERS:
+                for i in range(GpuCount.get()):
+                    GPU_MANAGERS.append(GPUManager.remote(i))
 
     num_cpus = int(ray.cluster_resources()["CPU"])
     NPartitions.put_if_default(num_cpus)

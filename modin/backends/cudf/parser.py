@@ -20,8 +20,8 @@ from pandas.core.dtypes.concat import union_categoricals
 from pandas.io.common import infer_compression
 import warnings
 
-from modin.pandas import GPU_MANAGERS
 from modin.engines.base.io import FileDispatcher
+from modin.engines.ray.cudf_on_ray.frame.partition_manager import GPU_MANAGERS
 from modin.data_management.utils import split_result_of_axis_func_pandas
 from modin.error_message import ErrorMessage
 

@@ -20,8 +20,7 @@ import os
 from typing import Union, Sequence, Optional, Tuple
 import pandas
 
-from modin.pandas import GPU_MANAGERS
-from modin.config import NPartitions, Backend
+from modin.config import NPartitions
 
 ColumnNamesTypes = Tuple[Union[pandas.Index, pandas.MultiIndex, pandas.Int64Index]]
 
@@ -46,26 +45,16 @@ class TextFileDispatcher(FileDispatcher):
 
     @classmethod
     def build_partition(cls, partition_ids, row_lengths, column_widths):
-        if Backend.get() == "Cudf":
-
-            def create_partition(i, j):
-                return cls.frame_partition_cls(
-                    GPU_MANAGERS[i],
-                    partition_ids[i][j],
-                    length=row_lengths[i],
-                    width=column_widths[j],
-                )
-
-        else:
-
-            def create_partition(i, j):
-                return cls.frame_partition_cls(
-                    partition_ids[i][j], length=row_lengths[i], width=column_widths[j]
-                )
-
         return np.array(
             [
-                [create_partition(i, j) for j in range(len(partition_ids[i]))]
+                [
+                    cls.frame_partition_cls(
+                        partition_ids[i][j],
+                        length=row_lengths[i],
+                        width=column_widths[j],
+                    )
+                    for j in range(len(partition_ids[i]))
+                ]
                 for i in range(len(partition_ids))
             ]
         )
@@ -98,7 +87,6 @@ class TextFileDispatcher(FileDispatcher):
     ):
         """
         Moves the file offset at the specified amount of bytes.
-
         Parameters
         ----------
         f: file object
@@ -108,7 +96,6 @@ class TextFileDispatcher(FileDispatcher):
             Indicate quote in a file.
         is_quoting: bool, default True
             Whether or not to consider quotes.
-
         Returns
         -------
         bool
@@ -149,7 +136,6 @@ class TextFileDispatcher(FileDispatcher):
     ):
         """
         Compute chunk sizes in bytes for every partition.
-
         Parameters
         ----------
         f: file to be partitioned
@@ -164,7 +150,6 @@ class TextFileDispatcher(FileDispatcher):
             Indicate quote in a file.
         is_quoting: bool, default True
             Whether or not to consider quotes.
-
         Returns
         -------
         An array, where each element of array is a tuple of two ints:
@@ -232,7 +217,6 @@ class TextFileDispatcher(FileDispatcher):
     ):
         """
         Move the file offset at the specified amount of rows.
-
         Parameters
         ----------
         f: file object
@@ -244,7 +228,6 @@ class TextFileDispatcher(FileDispatcher):
             Whether or not to consider quotes.
         outside_quotes: bool, default True
             Whether the file pointer is within quotes or not at the time this function is called.
-
         Returns
         -------
         tuple of bool and int,
@@ -332,7 +315,6 @@ class TextFileDispatcher(FileDispatcher):
             The maximum number of splits to separate the DataFrame into.
         column_names: ColumnNamesTypes
             column names of df.
-
         Returns
         -------
         column_widths: list
@@ -373,7 +355,6 @@ class TextFileDispatcher(FileDispatcher):
             parser task (start/end read bytes and etc.)
         partition_kwargs:
             kwargs that should be passed to the parser function.
-
         Returns
         -------
         partition_ids: list
@@ -386,12 +367,8 @@ class TextFileDispatcher(FileDispatcher):
         partition_ids = []
         index_ids = []
         dtypes_ids = []
-        gpu_manager = 0
         for start, end in splits:
             partition_kwargs.update({"start": start, "end": end})
-            if Backend.get() == 'Cudf':
-                    partition_kwargs.update({"gpu": gpu_manager})
-                    gpu_manager += 1
             partition_id = cls.deploy(
                 cls.parse, partition_kwargs.get("num_splits") + 2, partition_kwargs
             )

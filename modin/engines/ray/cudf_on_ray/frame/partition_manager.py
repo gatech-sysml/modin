@@ -24,6 +24,9 @@ from modin.data_management.utils import split_result_of_axis_func_pandas
 from modin.config import GpuCount
 from modin.engines.ray.generic.frame.partition_manager import RayFrameManager
 
+# Global view of GPU Actors
+GPU_MANAGERS = []
+
 
 @ray.remote(num_cpus=1, num_gpus=0.5)
 def func(df, other, apply_func):
@@ -57,8 +60,6 @@ class cuDFOnRayFrameManager(RayFrameManager):
 
     @classmethod
     def _get_gpu_managers(cls):
-        from modin.pandas import GPU_MANAGERS
-
         return GPU_MANAGERS
 
     @classmethod
