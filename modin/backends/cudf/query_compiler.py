@@ -337,14 +337,16 @@ class cuDFQueryCompiler(PandasQueryCompiler):
         # Note possible to do this all in one map reduce by creating a large dataframe with multiple
         # columns in it and concatinating
         def map_func(x):
-            x = x.iloc[:, 0]
-            return cudf.DataFrame({"N": [x.count()], "sum": [x.sum()]})
+            x = x.iloc[:, 0] # get all elements in the first column
+            return cudf.DataFrame({"N": [x.count()], "sum": [x.sum()]}) # return cudf.DataFrame with amt, sum
 
         def reduce_func(x):
             N = x["N"].sum()
             sum_of_x = x["sum"].sum()
             return cudf.Series([sum_of_x / N], name="mean")
 
+        # we construct a new modin frame with _map_reduce.
+        # _map_reduce is found in modin/engines/base/frame/data.py 
         new_modin_frame = self._modin_frame._map_reduce(
             0,
             map_func,
@@ -364,7 +366,17 @@ class cuDFQueryCompiler(PandasQueryCompiler):
         )(self)
 
     ## Str Methods
-    str_startswith = MapFunction.register(_str_map("startswith"), dtypes=np.bool)
+    #str_startswith = MapFunction.register(_str_map("startswith"), dtypes=np.bool)
+
+    def str_startswith(self, pat, **kwargs):
+        def map_func(x):
+            x = x.iloc[:, 0].str # get first column strings.
+            return cudf.Series([el.startswith(pat) for el in x]) # return a cudf Series that has booleans for startswith
+        new_modin_frame = self._modin_frame._map(
+            map_func,
+            bool
+        ) # build the new modin_frame
+        return self.__constructor__(new_modin_frame) # return the constructed frame
 
     ## Dt Methods
     dt_date = MapFunction.register(_dt_prop_map("date"))
