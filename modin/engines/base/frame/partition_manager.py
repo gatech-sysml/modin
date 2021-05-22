@@ -311,10 +311,7 @@ class BaseFrameManager(ABC):
         # may want to line to partitioning up with another BlockPartitions object. Since
         # we don't need to maintain the partitioning, this gives us the opportunity to
         # load-balance the data as well.
-        kw = {
-            "num_splits": num_splits,
-            "other_axis_partition": right_partitions,
-        }
+        kw = {"num_splits": num_splits, "other_axis_partition": right_partitions}
         if lengths:
             kw["_lengths"] = lengths
             kw["manual_partition"] = True

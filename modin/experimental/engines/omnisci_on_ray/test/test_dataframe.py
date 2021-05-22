@@ -271,10 +271,7 @@ class TestCSV:
     @pytest.mark.parametrize("header", [None, 0])
     def test_from_csv(self, header, names):
         csv_file = os.path.join(self.root, "modin/pandas/test/data", "test_usecols.csv")
-        kwargs = {
-            "header": header,
-            "names": names,
-        }
+        kwargs = {"header": header, "names": names}
 
         pandas_df = pandas.read_csv(csv_file, **kwargs)
         modin_df = pd.read_csv(csv_file, **kwargs)
@@ -293,9 +290,7 @@ class TestCSV:
     @pytest.mark.skip(reason="https://github.com/modin-project/modin/issues/2174")
     def test_float32(self):
         csv_file = os.path.join(self.root, "modin/pandas/test/data", "test_usecols.csv")
-        kwargs = {
-            "dtype": {"a": "float32", "b": "float32"},
-        }
+        kwargs = {"dtype": {"a": "float32", "b": "float32"}}
 
         pandas_df = pandas.read_csv(csv_file, **kwargs)
         pandas_df["a"] = pandas_df["a"] + pandas_df["b"]
@@ -306,19 +301,8 @@ class TestCSV:
 
     # Datetime Handling tests
     @pytest.mark.parametrize("engine", [None, "arrow"])
-    @pytest.mark.parametrize(
-        "parse_dates",
-        [
-            True,
-            False,
-            ["col2"],
-        ],
-    )
-    def test_read_csv_datetime(
-        self,
-        engine,
-        parse_dates,
-    ):
+    @pytest.mark.parametrize("parse_dates", [True, False, ["col2"]])
+    def test_read_csv_datetime(self, engine, parse_dates):
 
         eval_io(
             fn_name="read_csv",
@@ -344,11 +328,7 @@ class TestCSV:
             lambda x: x in ["col1", "col2"],
         ],
     )
-    def test_read_csv_col_handling(
-        self,
-        engine,
-        usecols,
-    ):
+    def test_read_csv_col_handling(self, engine, usecols):
         eval_io(
             fn_name="read_csv",
             check_kwargs_callable=not callable(usecols),
@@ -614,11 +594,7 @@ class TestConcat:
             return lib.concat([df], join=join, sort=sort, ignore_index=ignore_index)
 
         run_and_compare(
-            concat,
-            data=self.data,
-            join=join,
-            sort=sort,
-            ignore_index=ignore_index,
+            concat, data=self.data, join=join, sort=sort, ignore_index=ignore_index
         )
 
     def test_groupby_concat_single(self):
@@ -626,10 +602,7 @@ class TestConcat:
             df = lib.concat([df])
             return df.groupby("a").agg({"b": "min"})
 
-        run_and_compare(
-            concat,
-            data=self.data,
-        )
+        run_and_compare(concat, data=self.data)
 
 
 class TestGroupby:
@@ -1025,16 +998,8 @@ class TestAgg:
 
 
 class TestMerge:
-    data = {
-        "a": [1, 2, 3],
-        "b": [10, 20, 30],
-        "e": [11, 22, 33],
-    }
-    data2 = {
-        "a": [4, 2, 3],
-        "b": [40, 20, 30],
-        "d": [4000, 2000, 3000],
-    }
+    data = {"a": [1, 2, 3], "b": [10, 20, 30], "e": [11, 22, 33]}
+    data2 = {"a": [4, 2, 3], "b": [40, 20, 30], "d": [4000, 2000, 3000]}
     on_values = ["a", ["a"], ["a", "b"], ["b", "a"]]
     how_values = ["inner", "left"]
 
@@ -1496,9 +1461,7 @@ class TestDateTime:
 
 
 class TestCategory:
-    data = {
-        "a": ["str1", "str2", "str1", "str3", "str2", None],
-    }
+    data = {"a": ["str1", "str2", "str1", "str3", "str2", None]}
 
     def test_cat_codes(self):
         pandas_df = pandas.DataFrame(self.data)
@@ -1564,22 +1527,14 @@ class TestSort:
         def sort(df, ascending, **kwargs):
             return df.sort_values(["a", "b"], ascending=ascending)
 
-        run_and_compare(
-            sort,
-            data=self.data,
-            ascending=ascending,
-        )
+        run_and_compare(sort, data=self.data, ascending=ascending)
 
     @pytest.mark.parametrize("ascending", ascending_values)
     def test_sort_cols_str(self, ascending):
         def sort(df, ascending, **kwargs):
             return df.sort_values("d", ascending=ascending)
 
-        run_and_compare(
-            sort,
-            data=self.data,
-            ascending=ascending,
-        )
+        run_and_compare(sort, data=self.data, ascending=ascending)
 
     @pytest.mark.parametrize("cols", cols_values)
     @pytest.mark.parametrize("ascending", ascending_values)
@@ -1619,10 +1574,7 @@ class TestBadData:
         "b": ["b", [1, 2], [3, 4]],
         "c": ["1", "2", 3],
     }
-    bad_for_omnisci = {
-        "b": [[1, 2], [3, 4], [5, 6]],
-        "c": ["1", "2", "3"],
-    }
+    bad_for_omnisci = {"b": [[1, 2], [3, 4], [5, 6]], "c": ["1", "2", "3"]}
     ok_data = {"d": np.arange(3), "e": np.arange(3), "f": np.arange(3)}
 
     def _get_pyarrow_table(self, obj):

@@ -19,8 +19,7 @@ from modin.pandas.test.utils import df_equals
 
 
 @pytest.mark.skipif(
-    Engine.get() == "Dask",
-    reason="Dask does not have experimental API",
+    Engine.get() == "Dask", reason="Dask does not have experimental API"
 )
 def test_from_sql_distributed(make_sql_connection):  # noqa: F811
     if Engine.get() == "Ray":
@@ -43,8 +42,7 @@ def test_from_sql_distributed(make_sql_connection):  # noqa: F811
 
 
 @pytest.mark.skipif(
-    Engine.get() == "Dask",
-    reason="Dask does not have experimental API",
+    Engine.get() == "Dask", reason="Dask does not have experimental API"
 )
 def test_from_sql_defaults(make_sql_connection):  # noqa: F811
     filename = "test_from_sql_distributed.db"

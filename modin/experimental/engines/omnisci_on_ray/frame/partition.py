@@ -20,7 +20,6 @@ import ray
 
 
 class OmnisciOnRayFramePartition(BaseFramePartition):
-
     def __init__(
         self, object_id=None, frame_id=None, arrow_table=None, length=None, width=None
     ):
@@ -84,9 +83,7 @@ class OmnisciOnRayFramePartition(BaseFramePartition):
             and number of rows and columns.
         """
         return OmnisciOnRayFramePartition(
-            object_id=ray.put(obj),
-            length=len(obj.index),
-            width=len(obj.columns),
+            object_id=ray.put(obj), length=len(obj.index), width=len(obj.columns)
         )
 
     @classmethod

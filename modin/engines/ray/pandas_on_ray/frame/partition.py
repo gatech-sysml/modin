@@ -281,6 +281,7 @@ def deploy_ray_func(call_queue, partition):  # pragma: no cover
     -------
         Results of the functions called.
     """
+
     def deserialize(obj):
         if isinstance(obj, ray.ObjectRef):
             return ray.get(obj)

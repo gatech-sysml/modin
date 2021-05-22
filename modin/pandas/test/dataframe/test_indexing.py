@@ -103,13 +103,7 @@ def test_asof_without_nan(dates, subset):
     compare_asof(data, index, modin_where, pandas_where, subset)
 
 
-@pytest.mark.parametrize(
-    "lookup",
-    [
-        [60, 70, 90],
-        [60.5, 70.5, 100],
-    ],
-)
+@pytest.mark.parametrize("lookup", [[60, 70, 90], [60.5, 70.5, 100]])
 @pytest.mark.parametrize("subset", ["col2", "col1", ["col1", "col2"], None])
 def test_asof_large(lookup, subset):
     data = test_data["float_nan_data"]
@@ -251,8 +245,7 @@ def test_indexing_duplicate_axis(data):
     df_equals(modin_df.loc[0], pandas_df.loc[0])
     df_equals(modin_df.iloc[0, 0:4], pandas_df.iloc[0, 0:4])
     df_equals(
-        modin_df.loc[0, modin_df.columns[0:4]],
-        pandas_df.loc[0, pandas_df.columns[0:4]],
+        modin_df.loc[0, modin_df.columns[0:4]], pandas_df.loc[0, pandas_df.columns[0:4]]
     )
 
 
@@ -371,20 +364,15 @@ def test_loc_multi_index():
     pandas_index = pandas.MultiIndex.from_tuples(tuples, names=["first", "second"])
     frame_data = np.random.randint(0, 100, size=(16, 100))
     modin_df = pd.DataFrame(
-        frame_data,
-        index=modin_index,
-        columns=["col{}".format(i) for i in range(100)],
+        frame_data, index=modin_index, columns=["col{}".format(i) for i in range(100)]
     )
     pandas_df = pandas.DataFrame(
-        frame_data,
-        index=pandas_index,
-        columns=["col{}".format(i) for i in range(100)],
+        frame_data, index=pandas_index, columns=["col{}".format(i) for i in range(100)]
     )
     df_equals(modin_df.loc["bar", "col1"], pandas_df.loc["bar", "col1"])
     assert modin_df.loc[("bar", "one"), "col1"] == pandas_df.loc[("bar", "one"), "col1"]
     df_equals(
-        modin_df.loc["bar", ("col1", "col2")],
-        pandas_df.loc["bar", ("col1", "col2")],
+        modin_df.loc["bar", ("col1", "col2")], pandas_df.loc["bar", ("col1", "col2")]
     )
 
     # From issue #1456
@@ -616,8 +604,7 @@ def test_rename_sanity():
         modin_df.rename(str.upper, axis=0).index, df.rename(str.upper, axis=0).index
     )
     assert_index_equal(
-        modin_df.rename(str.upper, axis=1).columns,
-        df.rename(str.upper, axis=1).columns,
+        modin_df.rename(str.upper, axis=1).columns, df.rename(str.upper, axis=1).columns
     )
 
     # have to pass something
@@ -945,9 +932,7 @@ def test_sample(data, axis):
 
     with pytest.raises(ValueError):
         modin_df.sample(
-            frac=0.5,
-            weights=[0.5 for _ in range(len(modin_df.columns[:-1]))],
-            axis=1,
+            frac=0.5, weights=[0.5 for _ in range(len(modin_df.columns[:-1]))], axis=1
         )
 
     with pytest.raises(ValueError):
@@ -1322,9 +1307,7 @@ def test___setitem__mask():
     ids=["empty_frame", "empty_cols", "1_length_cols", "2_length_cols"],
 )
 @pytest.mark.parametrize(
-    "value",
-    [[11, 22], [11, 22, 33]],
-    ids=["2_length_val", "3_length_val"],
+    "value", [[11, 22], [11, 22, 33]], ids=["2_length_val", "3_length_val"]
 )
 @pytest.mark.parametrize("convert_to_series", [False, True])
 @pytest.mark.parametrize("new_col_id", [123, "new_col"], ids=["integer", "string"])

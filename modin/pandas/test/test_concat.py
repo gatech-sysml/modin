@@ -231,8 +231,5 @@ def test_sort_order(sort, join, axis):
     modin_df, modin_df2 = from_pandas(pandas_df), from_pandas(pandas_df2)
     pandas_concat = pandas.concat([pandas_df, pandas_df2], join=join, sort=sort)
     modin_concat = pd.concat([modin_df, modin_df2], join=join, sort=sort)
-    df_equals(
-        pandas_concat,
-        modin_concat,
-    )
+    df_equals(pandas_concat, modin_concat)
     assert list(pandas_concat.columns) == list(modin_concat.columns)

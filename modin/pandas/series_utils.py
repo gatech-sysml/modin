@@ -39,9 +39,7 @@ else:
 
 @_inherit_docstrings(
     pandas.core.arrays.categorical.CategoricalAccessor,
-    excluded=[
-        pandas.core.arrays.categorical.CategoricalAccessor.__init__,
-    ],
+    excluded=[pandas.core.arrays.categorical.CategoricalAccessor.__init__],
 )
 class CategoryMethods(object):
     def __init__(self, series):
@@ -118,9 +116,7 @@ class CategoryMethods(object):
 
 @_inherit_docstrings(
     pandas.core.strings.StringMethods,
-    excluded=[
-        pandas.core.strings.StringMethods.__init__,
-    ],
+    excluded=[pandas.core.strings.StringMethods.__init__],
 )
 class StringMethods(object):
     def __init__(self, series):
@@ -437,9 +433,7 @@ class StringMethods(object):
 
 @_inherit_docstrings(
     pandas.core.indexes.accessors.CombinedDatetimelikeProperties,
-    excluded=[
-        pandas.core.indexes.accessors.CombinedDatetimelikeProperties.__init__,
-    ],
+    excluded=[pandas.core.indexes.accessors.CombinedDatetimelikeProperties.__init__],
 )
 class DatetimeProperties(object):
     def __init__(self, series):

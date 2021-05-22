@@ -25,9 +25,7 @@ from modin.data_management.functions import (
     ReductionFunction,
     BinaryFunction,
 )
-from pandas.core.dtypes.common import (
-    is_list_like,
-)
+from pandas.core.dtypes.common import is_list_like
 
 # from modin.pandas.utils import try_cast_to_pandas
 
@@ -345,11 +343,7 @@ class cuDFQueryCompiler(PandasQueryCompiler):
             sum_of_x = x["sum"].sum()
             return cudf.Series([sum_of_x / N], name="mean")
 
-        new_modin_frame = self._modin_frame._map_reduce(
-            0,
-            map_func,
-            reduce_func,
-        )
+        new_modin_frame = self._modin_frame._map_reduce(0, map_func, reduce_func)
         return self.__constructor__(new_modin_frame)
 
     def to_datetime(self, **kwargs):
@@ -469,11 +463,7 @@ class cuDFQueryCompiler(PandasQueryCompiler):
             V = (sum_of_X2 - X2_of_sum / N) / (N - 1)
             return cudf.Series([np.sqrt(V)], name="std")
 
-        new_modin_frame = self._modin_frame._map_reduce(
-            0,
-            map_func,
-            reduce_func,
-        )
+        new_modin_frame = self._modin_frame._map_reduce(0, map_func, reduce_func)
         return self.__constructor__(new_modin_frame)
 
     # TODO: Only supports series right now. No support for args
@@ -495,11 +485,7 @@ class cuDFQueryCompiler(PandasQueryCompiler):
             V = (sum_of_X2 - X2_of_sum / N) / (N - 1)
             return cudf.Series([V], name="var")
 
-        new_modin_frame = self._modin_frame._map_reduce(
-            0,
-            map_func,
-            reduce_func,
-        )
+        new_modin_frame = self._modin_frame._map_reduce(0, map_func, reduce_func)
         return self.__constructor__(new_modin_frame)
 
     def fillna(self, **kwargs):
@@ -570,9 +556,7 @@ class cuDFQueryCompiler(PandasQueryCompiler):
 
     def reset_index(self, **kwargs):
         new_modin_frame = self._modin_frame._map(
-            lambda x: x.reset_index(**kwargs),
-            dtypes=None,
-            validate_columns=True,
+            lambda x: x.reset_index(**kwargs), dtypes=None, validate_columns=True
         )
         new_modin_frame.index = pandas.RangeIndex(len(self.index))
         return self.__constructor__(new_modin_frame)
@@ -689,9 +673,7 @@ class cuDFQueryCompiler(PandasQueryCompiler):
 
     def hash_values(self):
         new_modin_frame = self._modin_frame._apply_full_axis(
-            1,
-            lambda x: cudf.Series(x.hash_columns()),
-            dtypes="copy",
+            1, lambda x: cudf.Series(x.hash_columns()), dtypes="copy"
         )
         return self.__constructor__(new_modin_frame)
 
@@ -760,7 +742,7 @@ class cuDFQueryCompiler(PandasQueryCompiler):
     def diff(self, *args, **kwargs):
         return self.default_to_pandas(pandas.DataFrame.diff, *args, **kwargs)
 
-    def sum():
+    def sum(self):
         """Returns the sum of each numerical column or row.
 
         Return:
@@ -776,11 +758,7 @@ class cuDFQueryCompiler(PandasQueryCompiler):
             sum_of_x = x["sum"].sum()
             return cudf.Series([sum_of_x], name="sum")
 
-        new_modin_frame = self._modin_frame._map_reduce(
-            0,
-            map_func,
-            reduce_func,
-        )
+        new_modin_frame = self._modin_frame._map_reduce(0, map_func, reduce_func)
         return self.__constructor__(new_modin_frame)
 
     # def __del__(self):

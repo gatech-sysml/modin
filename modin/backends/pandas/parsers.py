@@ -73,10 +73,8 @@ class PandasParser(object):
         pandas_frame = cls.parse(fname, **kwargs)
         if isinstance(pandas_frame, pandas.io.parsers.TextFileReader):
             pd_read = pandas_frame.read
-            pandas_frame.read = (
-                lambda *args, **kwargs: cls.query_compiler_cls.from_pandas(
-                    pd_read(*args, **kwargs), cls.frame_cls
-                )
+            pandas_frame.read = lambda *args, **kwargs: cls.query_compiler_cls.from_pandas(
+                pd_read(*args, **kwargs), cls.frame_cls
             )
             return pandas_frame
         elif isinstance(pandas_frame, (OrderedDict, dict)):
@@ -252,10 +250,7 @@ class PandasExcelParser(PandasParser):
         from openpyxl.reader.excel import ExcelReader
         from openpyxl.worksheet.worksheet import Worksheet
         from pandas.core.dtypes.common import is_list_like
-        from pandas.io.excel._util import (
-            fill_mi_header,
-            maybe_convert_usecols,
-        )
+        from pandas.io.excel._util import fill_mi_header, maybe_convert_usecols
         from pandas.io.parsers import TextParser
         import re
 

@@ -578,11 +578,7 @@ class BasePandasFrame(object):
             return df.reset_index()
 
         new_parts = self._frame_mgr_cls.apply_func_to_select_indices(
-            0,
-            self._partitions,
-            from_labels_executor,
-            [0],
-            keep_remaining=True,
+            0, self._partitions, from_labels_executor, [0], keep_remaining=True
         )
         new_column_widths = [
             len(self.index.names) + self._column_widths[0]
@@ -915,8 +911,7 @@ class BasePandasFrame(object):
                     i,
                     indices[
                         slice(
-                            count_for_each_partition[i - 1],
-                            count_for_each_partition[i],
+                            count_for_each_partition[i - 1], count_for_each_partition[i]
                         )
                     ],
                 ),
@@ -1002,9 +997,7 @@ class BasePandasFrame(object):
                 assert indexers is not None
 
                 return lambda df: df._reindex_with_indexers(
-                    {0: [joined_index, indexers[frame_idx]]},
-                    copy=True,
-                    allow_dups=True,
+                    {0: [joined_index, indexers[frame_idx]]}, copy=True, allow_dups=True
                 )
 
             return lambda df: df.reindex(joined_index, axis=axis)
@@ -1087,10 +1080,7 @@ class BasePandasFrame(object):
         else:
             new_dtypes = None
         result = self.__constructor__(
-            new_parts,
-            *new_axes,
-            *new_axes_lengths,
-            new_dtypes,
+            new_parts, *new_axes, *new_axes_lengths, new_dtypes
         )
         result._apply_index_objs(axis)
         return result
@@ -1199,10 +1189,7 @@ class BasePandasFrame(object):
         ]
 
         return self.__constructor__(
-            new_partitions,
-            *new_axes,
-            *new_lengths,
-            dtypes=dtypes,
+            new_partitions, *new_axes, *new_lengths, dtypes=dtypes
         )
 
     def _fold(self, axis, func):
@@ -1259,19 +1246,11 @@ class BasePandasFrame(object):
         new_lengths[axis ^ 1] = None  # We do not know what the resulting widths will be
 
         return self.__constructor__(
-            new_partitions,
-            *new_axes,
-            *new_lengths,
-            self.dtypes if axis == 0 else None,
+            new_partitions, *new_axes, *new_lengths, self.dtypes if axis == 0 else None
         )
 
     def _apply_full_axis(
-        self,
-        axis,
-        func,
-        new_index=None,
-        new_columns=None,
-        dtypes=None,
+        self, axis, func, new_index=None, new_columns=None, dtypes=None
     ):
         """
         Perform a function across an entire axis.
@@ -1354,14 +1333,8 @@ class BasePandasFrame(object):
         # Get the indices for the axis being applied to (it is the opposite of axis
         # being applied over)
         dict_indices = self._get_dict_of_block_index(axis ^ 1, numeric_indices)
-        new_partitions = (
-            self._frame_mgr_cls.apply_func_to_select_indices_along_full_axis(
-                axis,
-                self._partitions,
-                func,
-                dict_indices,
-                keep_remaining=keep_remaining,
-            )
+        new_partitions = self._frame_mgr_cls.apply_func_to_select_indices_along_full_axis(
+            axis, self._partitions, func, dict_indices, keep_remaining=keep_remaining
         )
         # TODO Infer columns and index from `keep_remaining` and `apply_indices`
         if new_index is None:
@@ -1706,13 +1679,7 @@ class BasePandasFrame(object):
             dtypes = pandas.Series(
                 [np.dtype(dtypes)] * len(new_axes[1]), index=new_axes[1]
             )
-        result = self.__constructor__(
-            new_partitions,
-            *new_axes,
-            None,
-            None,
-            dtypes,
-        )
+        result = self.__constructor__(new_partitions, *new_axes, None, None, dtypes)
         if new_index is not None:
             result._apply_index_objs(0)
         if new_columns is not None:

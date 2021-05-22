@@ -54,10 +54,8 @@ def test_unwrap_partitions(axis):
                         == actual_partitions[row_idx][col_idx]
                     )
     else:
-        expected_axis_partitions = (
-            df._query_compiler._modin_frame._frame_mgr_cls.axis_partition(
-                df._query_compiler._modin_frame._partitions, axis ^ 1
-            )
+        expected_axis_partitions = df._query_compiler._modin_frame._frame_mgr_cls.axis_partition(
+            df._query_compiler._modin_frame._partitions, axis ^ 1
         )
         expected_axis_partitions = [
             axis_partition.coalesce().unwrap(squeeze=True)

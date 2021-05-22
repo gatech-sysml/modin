@@ -377,10 +377,7 @@ def read_hdf(
 
 @_inherit_func_docstring(pandas.read_feather)
 def read_feather(
-    path,
-    columns=None,
-    use_threads: bool = True,
-    storage_options: StorageOptions = None,
+    path, columns=None, use_threads: bool = True, storage_options: StorageOptions = None
 ):
     _, _, _, kwargs = inspect.getargvalues(inspect.currentframe())
 

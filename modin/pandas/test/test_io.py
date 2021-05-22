@@ -54,11 +54,7 @@ from modin.config import NPartitions
 
 NPartitions.put(4)
 
-DATASET_SIZE_DICT = {
-    "Small": 64,
-    "Normal": 2000,
-    "Big": 20000,
-}
+DATASET_SIZE_DICT = {"Small": 64, "Normal": 2000, "Big": 20000}
 
 # Number of rows in the test file
 NROWS = DATASET_SIZE_DICT.get(TestDatasetSize.get(), DATASET_SIZE_DICT["Small"])
@@ -267,14 +263,7 @@ class TestCsv:
     )
     @pytest.mark.parametrize("skip_blank_lines", [True, False])
     def test_read_csv_col_handling(
-        self,
-        request,
-        header,
-        index_col,
-        prefix,
-        names,
-        usecols,
-        skip_blank_lines,
+        self, request, header, index_col, prefix, names, usecols, skip_blank_lines
     ):
         if request.config.getoption("--simulate-cloud").lower() != "off":
             pytest.skip(
@@ -307,14 +296,7 @@ class TestCsv:
         ],
     )
     @pytest.mark.parametrize("skipfooter", [0, 10])
-    def test_read_csv_parsing_1(
-        self,
-        request,
-        dtype,
-        engine,
-        converters,
-        skipfooter,
-    ):
+    def test_read_csv_parsing_1(self, request, dtype, engine, converters, skipfooter):
         if request.config.getoption("--simulate-cloud").lower() != "off":
             pytest.skip(
                 "The reason of tests fail in `cloud` mode is unknown for now - issue #2340"
@@ -348,14 +330,7 @@ class TestCsv:
     @pytest.mark.parametrize("nrows", [35, None])
     @pytest.mark.parametrize("names", [["c1", "c2", "c3", "c4"], None])
     def test_read_csv_parsing_2(
-        self,
-        request,
-        true_values,
-        false_values,
-        skiprows,
-        skipfooter,
-        nrows,
-        names,
+        self, request, true_values, false_values, skiprows, skipfooter, nrows, names
     ):
         if false_values or true_values and Engine.get() != "Python":
             pytest.xfail("modin and pandas dataframes differs - issue #2446")
@@ -423,12 +398,7 @@ class TestCsv:
     @pytest.mark.parametrize("verbose", [True, False])
     @pytest.mark.parametrize("skip_blank_lines", [True, False])
     def test_read_csv_nans_handling(
-        self,
-        na_values,
-        keep_default_na,
-        na_filter,
-        verbose,
-        skip_blank_lines,
+        self, na_values, keep_default_na, na_filter, verbose, skip_blank_lines
     ):
         eval_io(
             fn_name="read_csv",
@@ -536,11 +506,7 @@ class TestCsv:
         file_name = "modin/pandas/test/data/issue_976.csv"
         names = [str(i) for i in range(11)]
 
-        kwargs = {
-            "sep": ";",
-            "names": names,
-            "encoding": "windows-1251",
-        }
+        kwargs = {"sep": ";", "names": names, "encoding": "windows-1251"}
         df1 = pd.read_csv(file_name, **kwargs)
         df2 = pandas.read_csv(file_name, **kwargs)
         # these columns contain data of various types in partitions
@@ -649,12 +615,7 @@ class TestCsv:
     @pytest.mark.parametrize("doublequote", [True, False])
     @pytest.mark.parametrize("comment", [None, "#", "x"])
     def test_read_csv_quoting(
-        self,
-        make_csv_file,
-        quoting,
-        quotechar,
-        doublequote,
-        comment,
+        self, make_csv_file, quoting, quotechar, doublequote, comment
     ):
         # in these cases escapechar should be set, otherwise error occures
         # _csv.Error: need to escape, but no escapechar set"
@@ -691,11 +652,7 @@ class TestCsv:
     )
     @pytest.mark.parametrize("warn_bad_lines", [True, False])
     @pytest.mark.parametrize("error_bad_lines", [True, False])
-    def test_read_csv_error_handling(
-        self,
-        warn_bad_lines,
-        error_bad_lines,
-    ):
+    def test_read_csv_error_handling(self, warn_bad_lines, error_bad_lines):
         eval_io(
             fn_name="read_csv",
             # read_csv kwargs
@@ -768,10 +725,7 @@ class TestCsv:
                 **kwargs,
             )
         else:
-            make_csv_file(
-                filename=unique_filename,
-                delimiter=delimiter,
-            )
+            make_csv_file(filename=unique_filename, delimiter=delimiter)
 
             eval_io(
                 filepath_or_buffer=unique_filename,
@@ -1201,8 +1155,7 @@ class TestJson:
         )
 
     @pytest.mark.parametrize(
-        "data",
-        [json_short_string, json_short_bytes, json_long_string, json_long_bytes],
+        "data", [json_short_string, json_short_bytes, json_long_string, json_long_bytes]
     )
     def test_read_json_string_bytes(self, data):
         with pytest.warns(UserWarning):

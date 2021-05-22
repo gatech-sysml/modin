@@ -45,10 +45,7 @@ import warnings
 from modin.error_message import ErrorMessage
 from modin.utils import _inherit_docstrings, to_pandas, hashable
 from modin.config import Engine, IsExperimental
-from .utils import (
-    from_pandas,
-    from_non_pandas,
-)
+from .utils import from_pandas, from_non_pandas
 from . import _update_engine
 from .iterator import PartitionIterator
 from .series import Series
@@ -580,8 +577,7 @@ class DataFrame(BasePandasDataset):
     def corr(self, method="pearson", min_periods=1):
         return self.__constructor__(
             query_compiler=self._query_compiler.corr(
-                method=method,
-                min_periods=min_periods,
+                method=method, min_periods=min_periods
             )
         )
 

@@ -1118,20 +1118,12 @@ def eval_groups(modin_groupby, pandas_groupby):
 
 
 def eval_shift(modin_groupby, pandas_groupby):
+    eval_general(modin_groupby, pandas_groupby, lambda groupby: groupby.shift())
     eval_general(
-        modin_groupby,
-        pandas_groupby,
-        lambda groupby: groupby.shift(),
+        modin_groupby, pandas_groupby, lambda groupby: groupby.shift(periods=0)
     )
     eval_general(
-        modin_groupby,
-        pandas_groupby,
-        lambda groupby: groupby.shift(periods=0),
-    )
-    eval_general(
-        modin_groupby,
-        pandas_groupby,
-        lambda groupby: groupby.shift(periods=-3),
+        modin_groupby, pandas_groupby, lambda groupby: groupby.shift(periods=-3)
     )
     eval_general(
         modin_groupby,
@@ -1543,8 +1535,9 @@ def test_multi_column_groupby_different_partitions(
         md_df = md_df.astype({by[0]: "category"})
         pd_df = pd_df.astype({by[0]: "category"})
 
-    md_grp, pd_grp = md_df.groupby(by, as_index=as_index), pd_df.groupby(
-        by, as_index=as_index
+    md_grp, pd_grp = (
+        md_df.groupby(by, as_index=as_index),
+        pd_df.groupby(by, as_index=as_index),
     )
     eval_general(md_grp, pd_grp, func_to_apply)
 
@@ -1568,8 +1561,9 @@ def test_not_str_by(by, as_index):
     columns = pandas.Index([0, 1.5, "str", pandas.Timestamp("2020-02-02"), None])
 
     md_df, pd_df = create_test_dfs(data, columns=columns)
-    md_grp, pd_grp = md_df.groupby(by, as_index=as_index), pd_df.groupby(
-        by, as_index=as_index
+    md_grp, pd_grp = (
+        md_df.groupby(by, as_index=as_index),
+        pd_df.groupby(by, as_index=as_index),
     )
 
     modin_groupby_equals_pandas(md_grp, pd_grp)

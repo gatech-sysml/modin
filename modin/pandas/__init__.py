@@ -97,7 +97,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 _is_first_update = {}
 dask_client = None
 _NOINIT_ENGINES = {
-    "Python",
+    "Python"
 }  # engines that don't require initialization, useful for unit tests
 
 # Set this to have a global view of the gpu managers.

@@ -11,12 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific language
 # governing permissions and limitations under the License.
 
-from .expr import (
-    BaseExpr,
-    LiteralExpr,
-    OpExpr,
-    AggregateExpr,
-)
+from .expr import BaseExpr, LiteralExpr, OpExpr, AggregateExpr
 from .calcite_algebra import (
     CalciteBaseNode,
     CalciteInputRefExpr,

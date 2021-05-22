@@ -208,18 +208,10 @@ def test_merge(test_data, test_data2):
             df_equals(modin_result, pandas_result)
 
             modin_result = modin_df.merge(
-                modin_df2,
-                how=hows[i],
-                left_on="key",
-                right_on="key",
-                sort=sorts[j],
+                modin_df2, how=hows[i], left_on="key", right_on="key", sort=sorts[j]
             )
             pandas_result = pandas_df.merge(
-                pandas_df2,
-                how=hows[i],
-                left_on="key",
-                right_on="key",
-                sort=sorts[j],
+                pandas_df2, how=hows[i], left_on="key", right_on="key", sort=sorts[j]
             )
             df_equals(modin_result, pandas_result)
 
@@ -390,71 +382,39 @@ def test_sort_values(request, data, axis, ascending, na_position):
         index = modin_df.index if axis == 1 or axis == "columns" else modin_df.columns
         key = index[0]
         modin_result = modin_df.sort_values(
-            key,
-            axis=axis,
-            ascending=ascending,
-            na_position=na_position,
-            inplace=False,
+            key, axis=axis, ascending=ascending, na_position=na_position, inplace=False
         )
         pandas_result = pandas_df.sort_values(
-            key,
-            axis=axis,
-            ascending=ascending,
-            na_position=na_position,
-            inplace=False,
+            key, axis=axis, ascending=ascending, na_position=na_position, inplace=False
         )
         df_equals(modin_result, pandas_result)
 
         modin_df_cp = modin_df.copy()
         pandas_df_cp = pandas_df.copy()
         modin_df_cp.sort_values(
-            key,
-            axis=axis,
-            ascending=ascending,
-            na_position=na_position,
-            inplace=True,
+            key, axis=axis, ascending=ascending, na_position=na_position, inplace=True
         )
         pandas_df_cp.sort_values(
-            key,
-            axis=axis,
-            ascending=ascending,
-            na_position=na_position,
-            inplace=True,
+            key, axis=axis, ascending=ascending, na_position=na_position, inplace=True
         )
         df_equals(modin_df_cp, pandas_df_cp)
 
         keys = [key, index[-1]]
         modin_result = modin_df.sort_values(
-            keys,
-            axis=axis,
-            ascending=ascending,
-            na_position=na_position,
-            inplace=False,
+            keys, axis=axis, ascending=ascending, na_position=na_position, inplace=False
         )
         pandas_result = pandas_df.sort_values(
-            keys,
-            axis=axis,
-            ascending=ascending,
-            na_position=na_position,
-            inplace=False,
+            keys, axis=axis, ascending=ascending, na_position=na_position, inplace=False
         )
         df_equals(modin_result, pandas_result)
 
         modin_df_cp = modin_df.copy()
         pandas_df_cp = pandas_df.copy()
         modin_df_cp.sort_values(
-            keys,
-            axis=axis,
-            ascending=ascending,
-            na_position=na_position,
-            inplace=True,
+            keys, axis=axis, ascending=ascending, na_position=na_position, inplace=True
         )
         pandas_df_cp.sort_values(
-            keys,
-            axis=axis,
-            ascending=ascending,
-            na_position=na_position,
-            inplace=True,
+            keys, axis=axis, ascending=ascending, na_position=na_position, inplace=True
         )
         df_equals(modin_df_cp, pandas_df_cp)
 

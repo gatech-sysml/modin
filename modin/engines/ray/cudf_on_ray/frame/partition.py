@@ -121,6 +121,7 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         -------
             A `BaseFramePartition` object.
         """
+
         def func(df, row_indices, col_indices):
             # CuDF currently does not support indexing multiindices with arrays,
             # so we have to create a boolean array where the desire indices are true
@@ -136,19 +137,16 @@ class cuDFOnRayFramePartition(BaseFramePartition):
 
         func = ray.put(func)
         key_future = self.gpu_manager.apply.remote(
-            self.get_key(),
-            func,
-            col_indices=col_indices,
-            row_indices=row_indices,
+            self.get_key(), func, col_indices=col_indices, row_indices=row_indices
         )
         return key_future
 
     def get_gpu_manager(self):
-        """Return the GPU manager.""""
+        """Return the GPU manager."""
         return self.gpu_manager
 
     def get_key(self):
-        """Return the key.""""
+        """Return the key."""
         return ray.get(self.key) if isinstance(self.key, ray.ObjectRef) else self.key
 
     @classmethod
@@ -169,7 +167,7 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         return key_future
 
     def get_object_id(self):
-        """Return the object ID stored in Ray.""""
+        """Return the object ID stored in Ray."""
         return self.gpu_manager.get_object_id.remote(self.get_key())
 
     def get(self):
@@ -212,6 +210,7 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         -------
             A NumPy array.
         """
+
         def convert(df):
             if len(df.columns == 1):
                 df = df.iloc[:, 0]
@@ -223,8 +222,7 @@ class cuDFOnRayFramePartition(BaseFramePartition):
                 return cupy.asnumpy(df.values)
 
         return self.gpu_manager.apply_result_not_dataframe.remote(
-            self.get_key(),
-            convert,
+            self.get_key(), convert
         )
 
     def free(self):
@@ -237,10 +235,7 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         """
         Create a copy of the data frame partition.
         """
-        new_key = self.gpu_manager.apply.remote(
-            self.get_key(),
-            lambda x: x,
-        )
+        new_key = self.gpu_manager.apply.remote(self.get_key(), lambda x: x)
         new_key = ray.get(new_key)
         return self.__constructor__(self.gpu_manager, new_key)
 

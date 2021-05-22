@@ -67,11 +67,7 @@ def bind_wrappers(cls):
             continue
 
         if callable(method):
-            setattr(
-                cls,
-                name,
-                build_method_wrapper(name, method),
-            )
+            setattr(cls, name, build_method_wrapper(name, method))
 
     return cls
 
@@ -147,11 +143,7 @@ class DFAlgQueryCompiler(BaseQueryCompiler):
                 on = [on]
             return self.__constructor__(
                 self._modin_frame.join(
-                    right._modin_frame,
-                    how=how,
-                    on=on,
-                    sort=sort,
-                    suffixes=suffixes,
+                    right._modin_frame, how=how, on=on, sort=sort, suffixes=suffixes
                 )
             )
         else:
@@ -162,14 +154,7 @@ class DFAlgQueryCompiler(BaseQueryCompiler):
             self._modin_frame.mask(row_numeric_idx=index, col_numeric_idx=columns)
         )
 
-    def groupby_size(
-        self,
-        by,
-        axis,
-        groupby_args,
-        map_args,
-        **kwargs,
-    ):
+    def groupby_size(self, by, axis, groupby_args, map_args, **kwargs):
         """Perform a groupby size.
 
         Parameters
@@ -194,11 +179,7 @@ class DFAlgQueryCompiler(BaseQueryCompiler):
         BaseQueryCompiler
         """
         new_frame = self._modin_frame.groupby_agg(
-            by,
-            axis,
-            {self._modin_frame.columns[0]: "size"},
-            groupby_args,
-            **kwargs,
+            by, axis, {self._modin_frame.columns[0]: "size"}, groupby_args, **kwargs
         )
         if groupby_args["as_index"]:
             shape_hint = "column"
@@ -357,11 +338,7 @@ class DFAlgQueryCompiler(BaseQueryCompiler):
     ):
         assert not inplace, "inplace=True should be handled on upper level"
         new_frame = self._modin_frame.fillna(
-            value=value,
-            method=method,
-            axis=axis,
-            limit=limit,
-            downcast=downcast,
+            value=value, method=method, axis=axis, limit=limit, downcast=downcast
         )
         return self.__constructor__(new_frame, self._shape_hint)
 

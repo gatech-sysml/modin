@@ -281,9 +281,7 @@ agg_func_values = list(agg_func.values())
 
 # For this sort of parameters pandas throws an exception.
 # See details in pandas issue 36036.
-agg_func_except = {
-    "sum sum": ["sum", "sum"],
-}
+agg_func_except = {"sum sum": ["sum", "sum"]}
 agg_func_except_keys = list(agg_func_except.keys())
 agg_func_except_values = list(agg_func_except.values())
 
@@ -456,9 +454,7 @@ def df_categories_equals(df1, df2):
     categories_columns = df1.select_dtypes(include="category").columns
     for column in categories_columns:
         assert_extension_array_equal(
-            df1[column].values,
-            df2[column].values,
-            check_dtype=False,
+            df1[column].values, df2[column].values, check_dtype=False
         )
 
 
@@ -779,11 +775,7 @@ def eval_io_from_str(csv_str: str, unique_filename: str, **kwargs):
         with open(unique_filename, "w") as f:
             f.write(csv_str)
 
-        eval_io(
-            filepath_or_buffer=unique_filename,
-            fn_name="read_csv",
-            **kwargs,
-        )
+        eval_io(filepath_or_buffer=unique_filename, fn_name="read_csv", **kwargs)
 
     finally:
         if os.path.exists(unique_filename):
@@ -1099,11 +1091,7 @@ def generate_dataframe(row_size=NROWS, additional_col_values=None):
 
     if additional_col_values is not None:
         assert isinstance(additional_col_values, (list, tuple))
-        data.update(
-            {
-                "col7": random_state.choice(additional_col_values, size=row_size),
-            }
-        )
+        data.update({"col7": random_state.choice(additional_col_values, size=row_size)})
     return pandas.DataFrame(data)
 
 

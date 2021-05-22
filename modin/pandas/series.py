@@ -26,10 +26,7 @@ import numpy as np
 import pandas
 from pandas.core.common import apply_if_callable, is_bool_indexer
 from pandas.util._validators import validate_bool_kwarg
-from pandas.core.dtypes.common import (
-    is_dict_like,
-    is_list_like,
-)
+from pandas.core.dtypes.common import is_dict_like, is_list_like
 from pandas._libs.lib import no_default
 from pandas._typing import IndexKeyFunc
 import sys
@@ -1311,11 +1308,7 @@ class Series(BasePandasDataset):
     def to_numpy(self, dtype=None, copy=False, na_value=no_default, **kwargs):
         return (
             super(Series, self)
-            .to_numpy(
-                dtype=dtype,
-                copy=copy,
-                na_value=na_value,
-            )
+            .to_numpy(dtype=dtype, copy=copy, na_value=na_value)
             .flatten()
         )
 

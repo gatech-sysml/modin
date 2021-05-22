@@ -298,10 +298,7 @@ class CalciteBuilder:
         def __exit__(self, type, value, traceback):
             self.builder._input_ctx_stack.pop()
 
-    type_strings = {
-        int: "INTEGER",
-        bool: "BOOLEAN",
-    }
+    type_strings = {int: "INTEGER", bool: "BOOLEAN"}
 
     def __init__(self):
         self._input_ctx_stack = []

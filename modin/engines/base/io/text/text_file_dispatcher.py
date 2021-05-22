@@ -85,11 +85,7 @@ class TextFileDispatcher(FileDispatcher):
 
     @classmethod
     def offset(
-        cls,
-        f,
-        offset_size: int,
-        quotechar: bytes = b'"',
-        is_quoting: bool = True,
+        cls, f, offset_size: int, quotechar: bytes = b'"', is_quoting: bool = True
     ):
         """
         Moves the file offset at the specified amount of bytes.
@@ -173,10 +169,7 @@ class TextFileDispatcher(FileDispatcher):
 
         if skiprows:
             outside_quotes, read_rows = cls._read_rows(
-                f,
-                nrows=skiprows,
-                quotechar=quotechar,
-                is_quoting=is_quoting,
+                f, nrows=skiprows, quotechar=quotechar, is_quoting=is_quoting
             )
 
         start = f.tell()
@@ -189,10 +182,7 @@ class TextFileDispatcher(FileDispatcher):
                     # it's possible only if is_quoting==True
                     partition_size = nrows - read_rows_counter
                 outside_quotes, read_rows = cls._read_rows(
-                    f,
-                    nrows=partition_size,
-                    quotechar=quotechar,
-                    is_quoting=is_quoting,
+                    f, nrows=partition_size, quotechar=quotechar, is_quoting=is_quoting
                 )
                 result.append((start, f.tell()))
                 start = f.tell()

@@ -21,8 +21,7 @@ class FoldFunction(Function):
             axis = call_kwds.get("axis", kwargs.get("axis"))
             return query_compiler.__constructor__(
                 query_compiler._modin_frame._fold(
-                    cls.validate_axis(axis),
-                    lambda x: fold_function(x, *args, **kwargs),
+                    cls.validate_axis(axis), lambda x: fold_function(x, *args, **kwargs)
                 )
             )
 

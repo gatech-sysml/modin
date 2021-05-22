@@ -19,8 +19,7 @@ import modin.experimental.xgboost as xgb
 
 
 @pytest.mark.skipif(
-    Engine.get() == "Ray",
-    reason="This test doesn't make sense on Ray backend.",
+    Engine.get() == "Ray", reason="This test doesn't make sense on Ray backend."
 )
 @pytest.mark.parametrize("func", ["train", "predict"])
 def test_backend(func):

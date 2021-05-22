@@ -68,10 +68,7 @@ class Connection:
             raise ClusterError("Got empty path to rpyc_classic")
 
         port = self.rpyc_port
-        cmd = [
-            main_python,
-            rpyc_classic,
-        ]
+        cmd = [main_python, rpyc_classic]
         if self.log_rpyc:
             cmd.extend(["--logfile", f"{tempfile.gettempdir()}/rpyc.log"])
         for _ in range(self.tries):

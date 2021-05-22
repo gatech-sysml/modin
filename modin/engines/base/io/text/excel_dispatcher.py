@@ -222,12 +222,7 @@ class ExcelDispatcher(TextFileDispatcher):
         else:
             dtypes = pandas.Series(dtypes, index=column_names)
         new_frame = cls.frame_cls(
-            data_ids,
-            new_index,
-            column_names,
-            row_lengths,
-            column_widths,
-            dtypes=dtypes,
+            data_ids, new_index, column_names, row_lengths, column_widths, dtypes=dtypes
         )
         new_query_compiler = cls.query_compiler_cls(new_frame)
         if index_col is None:

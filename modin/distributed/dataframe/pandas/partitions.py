@@ -72,10 +72,8 @@ def unwrap_partitions(api_layer_object, axis=None, bind_ip=False):
             f"Do not know how to unwrap '{actual_engine}' underlying partitions"
         )
     else:
-        partitions = (
-            api_layer_object._query_compiler._modin_frame._frame_mgr_cls.axis_partition(
-                api_layer_object._query_compiler._modin_frame._partitions, axis ^ 1
-            )
+        partitions = api_layer_object._query_compiler._modin_frame._frame_mgr_cls.axis_partition(
+            api_layer_object._query_compiler._modin_frame._partitions, axis ^ 1
         )
         return [
             part.coalesce(bind_ip=bind_ip).unwrap(squeeze=True, bind_ip=bind_ip)

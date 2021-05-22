@@ -67,7 +67,7 @@ class PandasOnPythonFramePartition(BaseFramePartition):
         """
 
         def call_queue_closure(data, call_queues):
-        
+
             result = data.copy()
             for func, kwargs in call_queues:
                 try:

@@ -60,10 +60,7 @@ class ModinXGBoostActor:
         if add_as_eval_method is not None:
             self._evals.append((self._dtrain, add_as_eval_method))
 
-    def set_predict_data(
-        self,
-        *X,
-    ):
+    def set_predict_data(self, *X):
         for x in X:
             self._dpredict.append(xgb.DMatrix(x, None))
 
@@ -195,10 +192,7 @@ def _assign_row_partitions_to_actors(
     row_partitions_by_actors = {ip: ([], []) for ip in actors}
     if evenly_data_distribution:
         _assign_partitions_evenly(
-            actors,
-            row_partitions,
-            False,
-            row_partitions_by_actors,
+            actors, row_partitions, False, row_partitions_by_actors
         )
     else:
         if data_for_aligning is None:
@@ -227,10 +221,7 @@ def _assign_row_partitions_to_actors(
                     row_partitions_by_actors[partitions_ips[i]][1].append(i)
             else:
                 _assign_partitions_evenly(
-                    actors,
-                    row_partitions,
-                    True,
-                    row_partitions_by_actors,
+                    actors, row_partitions, True, row_partitions_by_actors
                 )
         else:
             for ip, (_, order_of_indexes) in data_for_aligning.items():
@@ -242,10 +233,7 @@ def _assign_row_partitions_to_actors(
 
 
 def _assign_partitions_evenly(
-    actors: Dict,
-    row_partitions,
-    is_partitions_have_ip,
-    row_partitions_by_actors: Dict,
+    actors: Dict, row_partitions, is_partitions_have_ip, row_partitions_by_actors: Dict
 ):
     """
     Make evenly assigning of row_partitions to actors.
@@ -291,13 +279,7 @@ def _assign_partitions_evenly(
 
 
 def _train(
-    dtrain,
-    nthread,
-    evenly_data_distribution,
-    params: Dict,
-    *args,
-    evals=(),
-    **kwargs,
+    dtrain, nthread, evenly_data_distribution, params: Dict, *args, evals=(), **kwargs
 ):
     s = time.time()
 

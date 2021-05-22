@@ -45,9 +45,7 @@ from .series import Series
 
 @_inherit_docstrings(
     pandas.core.groupby.DataFrameGroupBy,
-    excluded=[
-        pandas.core.groupby.DataFrameGroupBy.__init__,
-    ],
+    excluded=[pandas.core.groupby.DataFrameGroupBy.__init__],
 )
 class DataFrameGroupBy(object):
     def __init__(
@@ -406,11 +404,7 @@ class DataFrameGroupBy(object):
             if callable(agg_func):
                 return agg_func(*args, **kwargs)
 
-        result = self._apply_agg_function(
-            func,
-            *args,
-            **kwargs,
-        )
+        result = self._apply_agg_function(func, *args, **kwargs)
 
         if relabeling_required:
             if not self._as_index:
@@ -982,9 +976,7 @@ class DataFrameGroupBy(object):
 
 @_inherit_docstrings(
     pandas.core.groupby.SeriesGroupBy,
-    excluded=[
-        pandas.core.groupby.SeriesGroupBy.__init__,
-    ],
+    excluded=[pandas.core.groupby.SeriesGroupBy.__init__],
 )
 class SeriesGroupBy(DataFrameGroupBy):
     @property

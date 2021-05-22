@@ -718,9 +718,7 @@ class PandasQueryCompiler(BaseQueryCompiler):
             return sum_cols / count_cols
 
         return MapReduceFunction.register(
-            map_fn,
-            reduce_fn,
-            preserve_index=(kwargs.get("numeric_only") is not None),
+            map_fn, reduce_fn, preserve_index=(kwargs.get("numeric_only") is not None)
         )(self, axis=axis, **kwargs)
 
     def value_counts(self, **kwargs):
@@ -1315,9 +1313,7 @@ class PandasQueryCompiler(BaseQueryCompiler):
             The unique values returned as a NumPy array.
         """
         new_modin_frame = self._modin_frame._apply_full_axis(
-            0,
-            lambda x: x.squeeze(axis=1).unique(),
-            new_columns=self.columns,
+            0, lambda x: x.squeeze(axis=1).unique(), new_columns=self.columns
         )
         return self.__constructor__(new_modin_frame)
 
@@ -1995,9 +1991,7 @@ class PandasQueryCompiler(BaseQueryCompiler):
         )
         new_index = pandas.RangeIndex(len(self.index) * len(value_vars))
         new_modin_frame = self._modin_frame.__constructor__(
-            new_parts,
-            index=new_index,
-            columns=id_vars + [var_name, value_name],
+            new_parts, index=new_index, columns=id_vars + [var_name, value_name]
         )
         result = self.__constructor__(new_modin_frame)
         # this assigment needs to propagate correct indices into partitions
@@ -2502,9 +2496,7 @@ class PandasQueryCompiler(BaseQueryCompiler):
 
                 missmatched_cols = internal_by_df.columns.difference(df.columns)
                 df = pandas.concat(
-                    [df, internal_by_df[missmatched_cols]],
-                    axis=1,
-                    copy=False,
+                    [df, internal_by_df[missmatched_cols]], axis=1, copy=False
                 )
                 internal_by_cols = internal_by_df.columns
 
@@ -2885,19 +2877,11 @@ class PandasQueryCompiler(BaseQueryCompiler):
         broadcast_values2 = broadcast_values2.reset_index(drop=True)
         # Index may contain duplicates
         new_index1 = broadcast_values1.sort_values(
-            by=columns,
-            axis=0,
-            ascending=ascending,
-            kind=kind,
-            na_position=na_position,
+            by=columns, axis=0, ascending=ascending, kind=kind, na_position=na_position
         ).index
         # Index without duplicates
         new_index2 = broadcast_values2.sort_values(
-            by=columns,
-            axis=0,
-            ascending=ascending,
-            kind=kind,
-            na_position=na_position,
+            by=columns, axis=0, ascending=ascending, kind=kind, na_position=na_position
         ).index
 
         result = self.reset_index(drop=True).reindex(axis=0, labels=new_index2)
@@ -2933,11 +2917,7 @@ class PandasQueryCompiler(BaseQueryCompiler):
         )
         broadcast_values.columns = self.columns
         new_columns = broadcast_values.sort_values(
-            by=rows,
-            axis=1,
-            ascending=ascending,
-            kind=kind,
-            na_position=na_position,
+            by=rows, axis=1, ascending=ascending, kind=kind, na_position=na_position
         ).columns
         return self.reindex(axis=1, labels=new_columns)
 

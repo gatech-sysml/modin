@@ -1124,13 +1124,7 @@ def test_squeeze():
         "col5": [0, 0, 0, 0],
     }
     frame_data_2 = {"col1": [0, 1, 2, 3]}
-    frame_data_3 = {
-        "col1": [0],
-        "col2": [4],
-        "col3": [8],
-        "col4": [12],
-        "col5": [0],
-    }
+    frame_data_3 = {"col1": [0], "col2": [4], "col3": [8], "col4": [12], "col5": [0]}
     frame_data_4 = {"col1": [2]}
     frame_data_5 = {"col1": ["string"]}
     # Different data for different cases
