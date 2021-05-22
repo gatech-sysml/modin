@@ -74,6 +74,9 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         -------
             The result of the function run remotely on Ray.        
         """
+        return self.gpu_manager.apply.remote(self.get_key(), None, func, **kwargs)
+
+    def apply_result_not_dataframe(self, func, **kwargs):
         return self.gpu_manager.apply_result_not_dataframe.remote(
             self.get_key(), func, **kwargs
         )
@@ -99,6 +102,9 @@ class cuDFOnRayFramePartition(BaseFramePartition):
 
     def length(self):
         """Return the length of partition."""
+        return ray.put(func)
+
+    def length(self):
         if self._length_cache:
             return self._length_cache
         return self.gpu_manager.length.remote(self.get_key())
@@ -121,7 +127,6 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         -------
             A `BaseFramePartition` object.
         """
-
         def func(df, row_indices, col_indices):
             # CuDF currently does not support indexing multiindices with arrays,
             # so we have to create a boolean array where the desire indices are true
@@ -137,7 +142,10 @@ class cuDFOnRayFramePartition(BaseFramePartition):
 
         func = ray.put(func)
         key_future = self.gpu_manager.apply.remote(
-            self.get_key(), func, col_indices=col_indices, row_indices=row_indices
+            self.get_key(),
+            func,
+            col_indices=col_indices,
+            row_indices=row_indices,
         )
         return key_future
 
@@ -195,6 +203,12 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         -------
             A Pandas DataFrame.
         """
+        return self.gpu_manager.get_object_id.remote(self.get_key())
+
+    def get(self):
+        return self.gpu_manager.get.remote(self.get_key())
+
+    def to_pandas(self):
         return self.gpu_manager.apply_non_persistent.remote(
             self.get_key(), None, cudf.DataFrame.to_pandas
         )
@@ -210,7 +224,6 @@ class cuDFOnRayFramePartition(BaseFramePartition):
         -------
             A NumPy array.
         """
-
         def convert(df):
             if len(df.columns == 1):
                 df = df.iloc[:, 0]

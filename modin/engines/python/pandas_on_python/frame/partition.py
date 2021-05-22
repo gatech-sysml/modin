@@ -106,6 +106,9 @@ class PandasOnPythonFramePartition(BaseFramePartition):
             return
         self.apply(lambda x: x)
 
+    def wait(self):
+        self.drain_call_queue()
+
     def mask(self, row_indices=None, col_indices=None):
         """Lazily create a mask that extracts the indices provided.
 

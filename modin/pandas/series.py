@@ -34,7 +34,7 @@ from typing import Union, Optional
 import warnings
 
 from modin.utils import _inherit_docstrings, to_pandas, Engine
-from modin.config import IsExperimental
+from modin.config import IsExperimental, PersistentPickle
 from .base import BasePandasDataset, _ATTRS_NO_LOOKUP
 from .iterator import PartitionIterator
 from .utils import from_pandas, is_scalar
@@ -44,6 +44,8 @@ from . import _update_engine
 
 @_inherit_docstrings(pandas.Series, excluded=[pandas.Series.__init__])
 class Series(BasePandasDataset):
+    _pandas_class = pandas.Series
+
     def __init__(
         self,
         data=None,
@@ -819,6 +821,14 @@ class Series(BasePandasDataset):
     def keys(self):
         return self.index
 
+    def kurt(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+        axis = self._get_axis_number(axis)
+        if numeric_only is True:
+            raise NotImplementedError("Series.kurt does not implement numeric_only.")
+        return super(Series, self).kurt(axis, skipna, level, numeric_only, **kwargs)
+
+    kurtosis = kurt
+
     def le(self, other, level=None, fill_value=None, axis=0):
         new_self, new_other = self._prepare_inter_op(other)
         return super(Series, new_self).le(new_other, level=level, axis=axis)
@@ -963,14 +973,15 @@ class Series(BasePandasDataset):
     ):
         axis = self._get_axis_number(axis)
         if level is not None:
-            return self._default_to_pandas(
-                "prod",
-                axis=axis,
-                skipna=skipna,
-                level=level,
-                numeric_only=numeric_only,
-                min_count=min_count,
-                **kwargs,
+            if (
+                not self._query_compiler.has_multiindex(axis=axis)
+                and level > 0
+                or level < -1
+                and level != self.index.name
+            ):
+                raise ValueError("level > 0 or level < -1 only valid with MultiIndex")
+            return self.groupby(level=level, axis=axis, sort=False).prod(
+                numeric_only=numeric_only, min_count=min_count, **kwargs
             )
         new_index = self.columns if axis else self.index
         if min_count > len(new_index):
@@ -1245,15 +1256,18 @@ class Series(BasePandasDataset):
         **kwargs,
     ):
         axis = self._get_axis_number(axis)
+        if numeric_only is True:
+            raise NotImplementedError("Series.sum does not implement numeric_only")
         if level is not None:
-            return self._default_to_pandas(
-                "sum",
-                axis=axis,
-                skipna=skipna,
-                level=level,
-                numeric_only=numeric_only,
-                min_count=min_count,
-                **kwargs,
+            if (
+                not self._query_compiler.has_multiindex(axis=axis)
+                and level > 0
+                or level < -1
+                and level != self.index.name
+            ):
+                raise ValueError("level > 0 or level < -1 only valid with MultiIndex")
+            return self.groupby(level=level, axis=axis, sort=False).sum(
+                numeric_only=numeric_only, min_count=min_count, **kwargs
             )
 
         new_index = self.columns if axis else self.index
@@ -1724,6 +1738,23 @@ class Series(BasePandasDataset):
         if reduce_dimension:
             return self._reduce_dimension(result)
         return self.__constructor__(query_compiler=result)
+
+    # Persistance support methods - BEGIN
+    @classmethod
+    def _inflate_light(cls, query_compiler, name):
+        return cls(query_compiler=query_compiler, name=name)
+
+    @classmethod
+    def _inflate_full(cls, pandas_series):
+        return cls(data=pandas_series)
+
+    def __reduce__(self):
+        self._query_compiler.finalize()
+        if PersistentPickle.get():
+            return self._inflate_full, (self._to_pandas(),)
+        return self._inflate_light, (self._query_compiler, self.name)
+
+    # Persistance support methods - END
 
 
 if IsExperimental.get():

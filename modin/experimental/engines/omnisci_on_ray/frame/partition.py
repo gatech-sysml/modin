@@ -65,6 +65,9 @@ class OmnisciOnRayFramePartition(BaseFramePartition):
             return self.arrow_table
         return ray.get(self.oid)
 
+    def wait(self):
+        ray.wait([self.oid])
+
     @classmethod
     def put(cls, obj):
         """

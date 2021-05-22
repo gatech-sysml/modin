@@ -34,13 +34,13 @@ from .utils import (
     GROUPBY_NGROUPS,
     IMPL,
     execute,
+    translator_groupby_ngroups,
 )
 
 
 class BaseTimeGroupBy:
     def setup(self, shape, ngroups=5, groupby_ncols=1):
-        if callable(ngroups):
-            ngroups = ngroups(shape[0])
+        ngroups = translator_groupby_ngroups(ngroups, shape)
         self.df, self.groupby_columns = generate_dataframe(
             ASV_USE_IMPL,
             "int",
@@ -394,29 +394,17 @@ class TimeFillna:
 
 
 class BaseTimeValueCounts:
-    subset_params = {
-        "all": lambda shape: shape[1],
-        "half": lambda shape: shape[1] // 2,
-    }
-
-    def setup(self, shape, ngroups=5, subset="all"):
-        try:
-            subset = self.subset_params[subset]
-        except KeyError:
-            raise KeyError(
-                f"Invalid value for 'subset={subset}'. Allowed: {list(self.subset_params.keys())}"
-            )
-        ncols = subset(shape)
-        self.df, _ = generate_dataframe(
+    def setup(self, shape, ngroups=5, subset=1):
+        ngroups = translator_groupby_ngroups(ngroups, shape)
+        self.df, self.subset = generate_dataframe(
             ASV_USE_IMPL,
             "int",
             *shape,
             RAND_LOW,
             RAND_HIGH,
-            groupby_ncols=ncols,
+            groupby_ncols=subset,
             count_groups=ngroups,
         )
-        self.subset = self.df.columns[:ncols].tolist()
 
 
 class TimeValueCountsFrame(BaseTimeValueCounts):
@@ -424,7 +412,7 @@ class TimeValueCountsFrame(BaseTimeValueCounts):
     params = [
         UNARY_OP_DATA_SIZE[ASV_DATASET_SIZE],
         GROUPBY_NGROUPS[ASV_DATASET_SIZE],
-        ["all", "half"],
+        [2, 10],
     ]
 
     def time_value_counts(self, *args, **kwargs):
@@ -441,7 +429,7 @@ class TimeValueCountsSeries(BaseTimeValueCounts):
 
     def setup(self, shape, ngroups, bins):
         super().setup(ngroups=ngroups, shape=shape)
-        self.df = self.df.iloc[:, 0]
+        self.df = self.df[self.subset[0]]
 
     def time_value_counts(self, shape, ngroups, bins):
         execute(self.df.value_counts(bins=bins))
@@ -504,6 +492,24 @@ class TimeMultiIndexing:
                 self.df.columns[2] : self.df.columns[-2],
             ]
         )
+
+
+class TimeResetIndex:
+    param_names = ["shape", "drop", "level"]
+    params = [UNARY_OP_DATA_SIZE[ASV_DATASET_SIZE], [False, True], [None, "level_1"]]
+
+    def setup(self, shape, drop, level):
+        self.df = generate_dataframe(ASV_USE_IMPL, "int", *shape, RAND_LOW, RAND_HIGH)
+
+        if level:
+            index = pd.MultiIndex.from_product(
+                [self.df.index[: shape[0] // 2], ["bar", "foo"]],
+                names=["level_1", "level_2"],
+            )
+            self.df.index = index
+
+    def time_reset_index(self, shape, drop, level):
+        execute(self.df.reset_index(drop=drop, level=level))
 
 
 class TimeAstype:

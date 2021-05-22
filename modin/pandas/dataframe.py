@@ -44,8 +44,11 @@ import warnings
 
 from modin.error_message import ErrorMessage
 from modin.utils import _inherit_docstrings, to_pandas, hashable
-from modin.config import Engine, IsExperimental
-from .utils import from_pandas, from_non_pandas
+from modin.config import Engine, IsExperimental, PersistentPickle
+from .utils import (
+    from_pandas,
+    from_non_pandas,
+)
 from . import _update_engine
 from .iterator import PartitionIterator
 from .series import Series
@@ -56,6 +59,8 @@ from .accessor import CachedAccessor, SparseFrameAccessor
 
 @_inherit_docstrings(pandas.DataFrame, excluded=[pandas.DataFrame.__init__])
 class DataFrame(BasePandasDataset):
+    _pandas_class = pandas.DataFrame
+
     def __init__(
         self,
         data=None,
@@ -1338,14 +1343,15 @@ class DataFrame(BasePandasDataset):
     ):
         axis = self._get_axis_number(axis)
         if level is not None:
-            return self._default_to_pandas(
-                "prod",
-                axis=axis,
-                skipna=skipna,
-                level=level,
-                numeric_only=numeric_only,
-                min_count=min_count,
-                **kwargs,
+            if (
+                not self._query_compiler.has_multiindex(axis=axis)
+                and level > 0
+                or level < -1
+                and level != self.index.name
+            ):
+                raise ValueError("level > 0 or level < -1 only valid with MultiIndex")
+            return self.groupby(level=level, axis=axis, sort=False).prod(
+                numeric_only=numeric_only, min_count=min_count
             )
 
         axis_to_apply = self.columns if axis else self.index
@@ -1693,14 +1699,15 @@ class DataFrame(BasePandasDataset):
             axis, numeric_only, ignore_axis=False
         )
         if level is not None:
-            return self._default_to_pandas(
-                "sum",
-                axis=axis,
-                skipna=skipna,
-                level=level,
-                numeric_only=numeric_only,
-                min_count=min_count,
-                **kwargs,
+            if (
+                not self._query_compiler.has_multiindex(axis=axis)
+                and level > 0
+                or level < -1
+                and level != self.index.name
+            ):
+                raise ValueError("level > 0 or level < -1 only valid with MultiIndex")
+            return self.groupby(level=level, axis=axis, sort=False).sum(
+                numeric_only=numeric_only, min_count=min_count
             )
         if min_count > 1:
             return data._reduce_dimension(
@@ -2088,9 +2095,6 @@ class DataFrame(BasePandasDataset):
     def __round__(self, decimals=0):
         return self._default_to_pandas(pandas.DataFrame.__round__, decimals=decimals)
 
-    def __setstate__(self, state):
-        return self._default_to_pandas(pandas.DataFrame.__setstate__, state)
-
     def __delitem__(self, key):
         if key not in self:
             raise KeyError(key)
@@ -2409,6 +2413,29 @@ class DataFrame(BasePandasDataset):
             # return self._getitem_multilevel(key)
         else:
             return self._getitem_column(key)
+
+    # Persistance support methods - BEGIN
+    @classmethod
+    def _inflate_light(cls, query_compiler):
+        """
+        Re-creates the object from previously-serialized lightweight representation.
+
+        The method is used for faster but not disk-storable persistence.
+        """
+        return cls(query_compiler=query_compiler)
+
+    @classmethod
+    def _inflate_full(cls, pandas_df):
+        """Re-creates the object from previously-serialized disk-storable representation."""
+        return cls(data=from_pandas(pandas_df))
+
+    def __reduce__(self):
+        self._query_compiler.finalize()
+        if PersistentPickle.get():
+            return self._inflate_full, (self._to_pandas(),)
+        return self._inflate_light, (self._query_compiler,)
+
+    # Persistance support methods - END
 
 
 if IsExperimental.get():

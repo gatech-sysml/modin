@@ -54,6 +54,11 @@ def pytest_addoption(parser):
         default=None,
         help="specifies backend to run tests on",
     )
+    parser.addoption(
+        "--extra-test-parameters",
+        action="store_true",
+        help="activate extra test parameter combinations",
+    )
 
 
 class Patcher:
@@ -155,13 +160,13 @@ def enforce_config():
             self.__check_var(name)
             del orig_env[name]
 
-        def pop(self, name):
+        def pop(self, name, default=object()):
             self.__check_var(name)
-            return orig_env.pop(name)
+            return orig_env.pop(name, default)
 
-        def get(self, name, defvalue=None):
+        def get(self, name, default=None):
             self.__check_var(name)
-            return orig_env.get(name, defvalue)
+            return orig_env.get(name, default)
 
         def __contains__(self, name):
             self.__check_var(name)
@@ -184,6 +189,9 @@ BASE_BACKEND_NAME = "BaseOnPython"
 class TestQC(BaseQueryCompiler):
     def __init__(self, modin_frame):
         self._modin_frame = modin_frame
+
+    def finalize(self):
+        self._modin_frame.finalize()
 
     @classmethod
     def from_pandas(cls, df, data_cls):
@@ -216,6 +224,11 @@ def set_base_backend(name=BASE_BACKEND_NAME):
 
 
 def pytest_configure(config):
+    if config.option.extra_test_parameters is not None:
+        import modin.pandas.test.utils as utils
+
+        utils.extra_test_parameters = config.option.extra_test_parameters
+
     backend = config.option.backend
 
     if backend is None:

@@ -66,6 +66,7 @@ from .utils import (
     test_data_categorical_keys,
     generate_multiindex,
     test_data_diff_dtype,
+    sort_index_for_equal_values,
 )
 from modin.config import NPartitions
 
@@ -1919,19 +1920,7 @@ def test_kurtosis(axis, skipna):
 
 
 @pytest.mark.parametrize("axis", ["rows", "columns"])
-@pytest.mark.parametrize(
-    "numeric_only",
-    [
-        pytest.param(
-            True,
-            marks=pytest.mark.xfail(
-                reason="Modin - DID NOT RAISE <class 'NotImplementedError'>"
-            ),
-        ),
-        False,
-        None,
-    ],
-)
+@pytest.mark.parametrize("numeric_only", [True, False, None])
 def test_kurtosis_numeric_only(axis, numeric_only):
     eval_general(
         *create_test_series(test_data_diff_dtype),
@@ -1960,7 +1949,8 @@ def test_last():
     df_equals(modin_series.last("20D"), pandas_series.last("20D"))
 
 
-def test_index_order():
+@pytest.mark.parametrize("func", ["all", "any", "mad", "count"])
+def test_index_order(func):
     # see #1708 and #1869 for details
     s_modin, s_pandas = create_test_series(test_data["float_nan_data"])
     rows_number = len(s_modin.index)
@@ -1971,11 +1961,10 @@ def test_index_order():
     s_modin.index = index
     s_pandas.index = index
 
-    for func in ["all", "any", "mad", "count"]:
-        df_equals(
-            getattr(s_modin, func)(level=0).index,
-            getattr(s_pandas, func)(level=0).index,
-        )
+    df_equals(
+        getattr(s_modin, func)(level=0).index,
+        getattr(s_pandas, func)(level=0).index,
+    )
 
 
 @pytest.mark.parametrize("data", test_data_values, ids=test_data_keys)
@@ -2990,19 +2979,7 @@ def test_subtract(data):
 @pytest.mark.parametrize(
     "skipna", bool_arg_values, ids=arg_keys("skipna", bool_arg_keys)
 )
-@pytest.mark.parametrize(
-    "numeric_only",
-    [
-        None,
-        False,
-        pytest.param(
-            True,
-            marks=pytest.mark.xfail(
-                reason="numeric_only not implemented for pandas.Series"
-            ),
-        ),
-    ],
-)
+@pytest.mark.parametrize("numeric_only", [None, False, True])
 @pytest.mark.parametrize(
     "min_count", int_arg_values, ids=arg_keys("min_count", int_arg_keys)
 )
@@ -3301,34 +3278,6 @@ def test_update(data, other_data):
 
 @pytest.mark.parametrize("normalize, bins, dropna", [(True, 3, False)])
 def test_value_counts(normalize, bins, dropna):
-    def sort_index_for_equal_values(result, ascending):
-        is_range = False
-        is_end = False
-        i = 0
-        new_index = np.empty(len(result), dtype=type(result.index))
-        while i < len(result):
-            j = i
-            if i < len(result) - 1:
-                while result[result.index[i]] == result[result.index[i + 1]]:
-                    i += 1
-                    if is_range is False:
-                        is_range = True
-                    if i == len(result) - 1:
-                        is_end = True
-                        break
-            if is_range:
-                k = j
-                for val in sorted(result.index[j : i + 1], reverse=not ascending):
-                    new_index[k] = val
-                    k += 1
-                if is_end:
-                    break
-                is_range = False
-            else:
-                new_index[j] = result.index[j]
-            i += 1
-        return type(result)(result, index=new_index)
-
     # We sort indices for Modin and pandas result because of issue #1650
     modin_series, pandas_series = create_test_series(test_data_values[0])
 

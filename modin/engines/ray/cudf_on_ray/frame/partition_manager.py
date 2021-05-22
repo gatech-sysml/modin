@@ -18,7 +18,10 @@ from modin.error_message import ErrorMessage
 
 from pandas.api.types import union_categoricals
 
-from .axis_partition import cuDFOnRayFrameColumnPartition, cuDFOnRayFrameRowPartition
+from .axis_partition import (
+    cuDFOnRayFrameColumnPartition,
+    cuDFOnRayFrameRowPartition,
+)
 from .partition import cuDFOnRayFramePartition
 
 import ray
@@ -400,7 +403,10 @@ class cuDFOnRayFrameManager(object):
         preprocessed_func = cls.preprocess_func(func)
         keys_and_gpus = np.array(
             [
-                [obj.apply(preprocessed_func, **kwargs), obj.get_gpu_manager()]
+                [
+                    obj.apply(preprocessed_func, **kwargs),
+                    obj.get_gpu_manager(),
+                ]
                 for obj in partitions
             ]
         )
