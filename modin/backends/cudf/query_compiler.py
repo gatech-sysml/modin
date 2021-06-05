@@ -743,10 +743,10 @@ class cuDFQueryCompiler(PandasQueryCompiler):
         return self.default_to_pandas(pandas.DataFrame.diff, *args, **kwargs)
 
     def sum(self):
-        """Returns the sum of each numerical column or row.
+        """Returns the sum of each numerical column.
 
         Return:
-            Pandas series with the sum of each numerical column or row.
+            Pandas series with the sum of each numerical column.
         """
         # Note possible to do this all in one map reduce by creating a large dataframe with multiple
         # columns in it and concatinating
